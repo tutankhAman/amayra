@@ -5,7 +5,15 @@ const productSchema = new mongoose.Schema(
         name:{
             type: String,
             required: true,
-            trim: true
+            trim: true,
+            index: true
+        },
+        shopID:{
+            type: String,
+            required:true,
+            unique:true,
+            trim: true,
+            index:true
         },
         description: {
             type: String,
@@ -48,4 +56,4 @@ const productSchema = new mongoose.Schema(
     }, {timestamps: true}
 );
 
-module.exports = mongoose.model("Product", productSchema)
+export const Product = mongoose.model("Product", productSchema)
