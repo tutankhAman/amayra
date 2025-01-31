@@ -1,0 +1,22 @@
+{
+  "name": "amayra",
+  "version": "1.0.0",
+  "description": "Offcial website of Amyra Ethnic Wears",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
+  },
+  "keywords": [
+    "ecommerce"
+  ],
+  "author": "Aman Aziz",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "mongoose": "^8.9.5"
+  }
+}
