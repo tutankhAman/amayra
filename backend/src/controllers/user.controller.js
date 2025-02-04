@@ -148,7 +148,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     //accessing refresh token form cookie
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
-    if (incomingRefreshToken) {
+    if (!incomingRefreshToken) {
         throw new apiError(401, "unauthorized request")
     }
 
@@ -195,9 +195,94 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
    }
 })
 
+const changeCurrentPassword = asyncHandler(async(req, res)=>{
+    //fetching from frontend
+    const {oldPassword, newPassword}= req.body
+
+    //fetching user from database
+    const user= await User.findById(req.user?._id)
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+
+    if (!isPasswordCorrect) {
+        throw new apiError(400, "Invalid old password")
+    }
+
+    //setting new password
+    user.password = newPassword
+
+    //updating the db
+    await user.save({validateBeforeSave: false})
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, {}, "Password changed succesfully"))
+
+})
+
+//fetching current user using auth middleware
+const getCurrentUser = asyncHandler(async (req, res) => {
+    return res
+    .status(200)
+    .json(200, req.user, "current user fetched succesfully")
+})
+
+const updateAccountDetails = asyncHandler(async(req, res) => {
+    const {name, email} = req.body
+
+    if(!name || !email){
+        throw new apiError(400, "All fields are required")
+    }
+
+    //finding the user and updating their details
+    const user = User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set: {
+                name: name,
+                email: email
+            }
+        },
+        //returning the updated user
+        {new: true}
+    ).select("-password")
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user, "Account details updated successfully"))
+})
+
+const updateUserAvatar = asyncHandler(async (req,res) => {
+    const avatarLocalPath = req.file?.avatarLocalPath
+
+    if (!avatarLocalPath) {
+        throw new apiError(400, "Avatar file is missing")
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath)
+
+    if (!avatar.url) {
+        throw new apiError(400, "error while uploading file")
+    }
+
+    await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $set:{
+                avatar: avatar.url
+            }
+        },
+        {new:true}
+    ).select("-password")
+})
+
 export { 
     registerUser,
     loginUser,
     logoutUser,
-    refreshAccessToken
+    refreshAccessToken,
+    changeCurrentPassword,
+    getCurrentUser,
+    updateAccountDetails,
+    updateUserAvatar
 }
