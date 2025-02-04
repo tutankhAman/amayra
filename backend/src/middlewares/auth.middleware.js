@@ -3,7 +3,7 @@ import { apiError } from "../utils/apiError"
 import jwt from "jsonwebtoken"
 import { User } from "../models/user.models.js"
 
-
+//middleware check if the user is authenticated
 export const verifyJWT = asyncHandler(async (req, res, next) => {
     try {
         //accessing cookies (here, access token cookie)
