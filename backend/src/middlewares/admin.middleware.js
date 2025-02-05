@@ -1,11 +1,11 @@
-import {User} from "../models/user.models"
-import { apiError } from "../utils/apiError"
-import { asyncHandler } from "../utils/asyncHandler"
+import {User} from "../models/user.models.js"
+import { apiError } from "../utils/apiError.js"
+import { asyncHandler } from "../utils/asyncHandler.js"
 
 export const adminAuth = asyncHandler(async (req,res, next) => {
     try {        
         //comparing the role with admin
-        if (user.role !== "admin") {
+        if (req.user.role !== "admin") {
             throw new apiError(403, "Admin access denied")
         }
 

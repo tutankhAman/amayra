@@ -27,7 +27,7 @@ const generateAccessAndRefreshTokens = async (userId)=>{
 const registerUser = asyncHandler(async (req, res) => {
     //getting details
     const { name, email, password } = req.body
-    console.log("email:", email);
+    // console.log("email:", email);
 
     //validation
     if (
@@ -58,7 +58,7 @@ const registerUser = asyncHandler(async (req, res) => {
         password
     })
 
-    //remove pass and refresh token from response
+    //check if user is created and remove password and refresh token from the response
     const creationCheck = await User.findById(newUser._id).select(
         "-password -refreshToken"
     )
