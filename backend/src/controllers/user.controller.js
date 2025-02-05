@@ -228,24 +228,27 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 })
 
 const updateAccountDetails = asyncHandler(async(req, res) => {
-    const {name, email} = req.body
+    const {name, email, address, phone} = req.body
 
     if(!name || !email){
         throw new apiError(400, "All fields are required")
     }
 
     //finding the user and updating their details
-    const user = User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set: {
-                name: name,
-                email: email
+                name, email, address, phone
             }
         },
         //returning the updated user
         {new: true}
     ).select("-password")
+
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
 
     return res
     .status(200)
@@ -265,7 +268,7 @@ const updateUserAvatar = asyncHandler(async (req,res) => {
         throw new apiError(400, "error while uploading file")
     }
 
-    await User.findByIdAndUpdate(
+    const user = await User.findByIdAndUpdate(
         req.user?._id,
         {
             $set:{
@@ -274,7 +277,89 @@ const updateUserAvatar = asyncHandler(async (req,res) => {
         },
         {new:true}
     ).select("-password")
+
+    return res
+    .status(200)
+    .json(new apiResponse(200, user, "Avatar updated successfully"))
 })
+
+//wishlist
+const addToWishlist = asyncHandler(async (req, res) => {
+    //fetch user id
+    const user = await User.findById(req.user._id)
+
+    if(!user) {
+        throw new apiError(400, "User not found")
+    }
+
+    //fetch product id
+    const productId = req.body.productId
+
+    //validating product id
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+        throw new apiError(400, "Invalid Product ID");
+    } 
+
+    //check if product already there in wishlist
+    const isInWishlist = user.wishlist.includes(productId);
+
+    if (isInWishlist) {
+        throw new apiError(400, "Product is already in wishlist")
+    }
+
+    //push to wishlist array
+    user.wishlist.push(productId)
+
+    //save the wishlist state
+    await user.save();  
+    res.status(200).json(new apiResponse(200, user.wishlist, "Wishlist succesfully updated"))  
+})
+
+const removeFromWishlist = asyncHandler(async (req, res) => {
+    //fetching user
+    const user = await User.findById(req.user._id)
+
+    if(!user) {
+        throw new apiError(400, "User not found")
+    }
+
+    //fetching product
+    const productId = req.body.productId
+
+    if(!mongoose.Types.ObjectId.isValid(productId)) {
+        throw new apiError(400, "Product id is invalid")
+    }
+
+    //checking if product already exists
+    const isInWishlist = user.wishlist.includes(productId)
+    if (!isInWishlist) {
+        throw new apiError(400, "Product not in wishlist")
+    }
+
+    //removing product logic
+    user.wishlist.pull(productId);
+
+    //saving the wishlist state
+    await user.save();
+
+    res.status(200).json(new apiResponse(200, user.wishlist, "Item successfully deleted from wishlist"))
+})
+
+const getWishlist = asyncHandler(async (req, res) => {
+    //fetching user id
+    const user = await User.findById(req.user._id)
+    if(!user) {
+        throw new apiError(400, "User not found")
+    }
+
+    //populating so wishlist shows the attributes of product
+    await user.populate("wishlist", "name price images")
+
+    //returning wishlist
+    res.status(200).json(new apiResponse(200, user.wishlist, "Wishlist fetched succesfully"))
+})
+
+//orderhistory
 
 export { 
     registerUser,
@@ -284,5 +369,8 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateAccountDetails,
-    updateUserAvatar
+    updateUserAvatar,
+    addToWishlist,
+    removeFromWishlist, 
+    getWishlist
 }
