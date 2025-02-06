@@ -21,11 +21,20 @@ const productSchema = new mongoose.Schema(
             type: Number,
             required: true
         },
+        discount:{
+            type: Number,
+        },
+        type: {
+            type: String,
+            enum: ["Men", "Women", "Kid"],
+            default: "Men",
+            required: true
+        },
         category: {
             type: String,
             enum: ["Sherwani", "Kurta", "Lehenga", "Saree", "Others"],
             required: true,
-          },
+        },
         sizes: {
             type: [String], // Example: ["S", "M", "L", "XL", "XXL"]
             default: ["Free Size"],
