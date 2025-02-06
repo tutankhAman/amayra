@@ -1,12 +1,21 @@
 import {Router} from "express"
 import {
-    createProduct
+    createProduct,
+    getProduct,
+    getProductById,
+    updateProduct
 } from "../controllers/product.controller.js"
 import { upload } from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import {adminAuth} from "../middlewares/admin.middleware.js"
 
 const router = Router();
+
+
+router.route("/").get(getProduct)
+router.route("/:productId").get(getProductById)
+
+//secured routes//
 
 router.route("/create-product").post(
     upload.fields([
@@ -16,4 +25,7 @@ router.route("/create-product").post(
         }
     ]), verifyJWT, adminAuth, createProduct
 )
+router.route("/update/:productId").put(upload.array("images", 5), verifyJWT, adminAuth, updateProduct)
+
+
 export default router;

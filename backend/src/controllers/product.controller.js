@@ -113,6 +113,90 @@ const getProduct = asyncHandler(async (req, res) => {
     }
 })
 
+const getProductById = asyncHandler(async (req, res) => {
+    //fetch id
+    const {productId} = req.params
 
+    //validate the id
+    if (!productId){
+        throw new apiError(400, "Id field is required")
+    }
 
-export { createProduct, getProduct }
+    //fetch product form db based on that id
+    const product = await Product.findOne({productId: productId})
+
+    if (!product) {
+        throw new apiError(404, "Id not found")
+    }
+
+    //return response
+    return res.status(200).json(new apiResponse(200, product, "Product fetched succesfully"))
+})
+
+const updateProduct = asyncHandler(async (req,res) => {
+    //fetching details from frontend
+    const { name, productId, description, price, discount, type, category, sizes, stock } = req.body
+
+    if(!productId) {
+        throw new apiError(400, "Product Id is required")
+    }
+
+    //validating if product exists
+    const productExistance = await Product.findOne({
+        //params used to fetch the older product id
+        productId: req.params.productId
+    })
+    if (!productExistance) {
+        throw new apiError(404, `Product with id ${req.params.productId} doesn't exist`)
+    }
+
+    //searching for the new product Id in the db
+    const productIdExists = await Product.findOne({
+        productId
+    });
+
+    if (productIdExists && productIdExists.productId !== req.params.productId) {
+        throw new apiError(400, `Product with id ${productId} already exists`);
+    }
+
+    //file update logic
+    let imageUrls = [...productExistance.images]  
+
+    if (req.files && req.files.images && req.files.images.length > 0) {
+        imageUrls = []  // Reset if uploading new images
+        
+        for (const file of req.files.images) {
+            const uploadResult = await uploadOnCloudinary(file.path)
+            if (uploadResult && uploadResult.url) {
+                imageUrls.push(uploadResult.url)
+            }
+        }
+
+        if (imageUrls.length > 0 && productExistance.images.length > 0) {
+            for (const oldImageUrl of productExistance.images) {
+                try {
+                    const publicId = oldImageUrl.split("/").pop().split(".")[0]
+                    await deleteFromCloudinary(publicId)
+                } catch (error) {
+                    console.error("Error deleting old image:", error)
+                }
+            }
+        }
+    }
+
+    //updating the data
+    const product = await Product.findByIdAndUpdate(
+        productExistance._id,
+        {
+            $set: {
+                name, productId, description, price, discount, type, category, sizes, stock, images: imageUrls 
+            }
+        },
+        {new:true}
+    )
+
+    //returning updated data
+    res.status(200).json(new apiResponse(200, product, "Product Updated Succesfully"))
+})
+
+export { createProduct, getProduct, getProductById, updateProduct }
