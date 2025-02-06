@@ -27,5 +27,7 @@ router.route("/create-product").post(
 )
 router.route("/update/:productId").put(upload.array("images", 5), verifyJWT, adminAuth, updateProduct)
 
+router.route("/delete/:productId").delete(verifyJWT, adminAuth, deleteProduct)
+
 
 export default router;
