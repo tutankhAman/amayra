@@ -98,9 +98,9 @@ const getProduct = asyncHandler(async (req, res) => {
 
         //fetching from database based on filters
         const products = await Product.find(filters)
-            .sort(sort)
-            .limit(limitNumber)
-            .skip((pageNumber - 1) * limit)
+        .sort(sort)
+        .limit(limitNumber)
+        .skip((pageNumber - 1) * limit)
 
         //existance check
         if (products.length === 0) {
