@@ -9,43 +9,48 @@ const orderSchema = new mongoose.Schema(
         },
         products: [
             {
-              product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-              quantity: { type: Number, required: true, min: 1 },
-              price: { type: Number, required: true }
+                product: { type: mongoose.Schema.Types.ObjectId, ref: "Product", required: true },
+                quantity: { type: Number, required: true, min: 1 },
+                price: { type: Number, required: true }
             },
         ],
         totalPrice: {
             type: Number,
             required: true
         },
-        paymentSatus: {
+        subtotal: {
+            type: Number,
+            required: true
+        },
+        tax: {
+            type: Number,
+            default: 0
+        },
+        paymentStatus: {
             type: String,
             enum: ["Pending", "Paid", "Failed"],
             default: "Pending"
         },
+        isPaid: {
+            type: Boolean,
+            default: false
+        },
         paymentMethod: {
             type: String,
-            enum: ["COD", "Credit Card", "UPI"],
+            enum: ["Cash", "UPI"],
             required: true
         },
         orderStatus: {
             type: String,
-            enum: ["Processing", "Shipped", "Delivered", "Cancelled"],
-            default: "Processing"
+            enum: ["Pending", "Ready for Pickup", "Completed", "Cancelled"],
+            default: "Pending"
         },
-        deliveryAddress: {
-            street: String,
-            city: String,
-            state: String,
-            zip: String,
-            country: {
-                type: String,
-                default: "India"
-            },
+        adminNotes: {
+            type: String,
+            default: ""
         }
     }, 
-    
-    {timestamps: true}
+    { timestamps: true }
 );
 
 export const Order = mongoose.model("Order", orderSchema)
