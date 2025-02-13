@@ -197,6 +197,7 @@ const getProductAnalytics = asyncHandler(async (req, res) => {
                     ...dateFilter 
                 } 
             },
+            //splitting the product into seperate documents
             { $unwind: "$products" },
             { 
                 $match: { 
@@ -204,6 +205,7 @@ const getProductAnalytics = asyncHandler(async (req, res) => {
                 } 
             },
             {
+                //sales data per product
                 $group: {
                     _id: { 
                         date: { 
