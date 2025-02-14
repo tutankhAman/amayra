@@ -1,14 +1,17 @@
 import { useState } from 'react'
-import './App.css'
+import Navbar from './layouts/Navbar'
+import Footer from './layouts/Footer'
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      
-    </>
-  )
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <main className="flex-grow">
+        {/* Your routes/content here */}
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 export default App

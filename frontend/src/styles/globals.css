@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+
 body {
     @apply bg-base text-text font-display;
+    font-family: "Lora";
 }

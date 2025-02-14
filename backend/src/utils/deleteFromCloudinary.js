@@ -9,7 +9,7 @@ export const deleteFromCloudinary = async(publicId) => {
 
         console.log("Attempting to delete file with public ID:", publicId)
 
-        const respinse = await cloudinary.uploader.destroy(publicId);
+        const response = await cloudinary.uploader.destroy(publicId);
 
         console.log("Cloudinary deletion response", response)
 

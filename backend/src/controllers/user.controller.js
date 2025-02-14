@@ -10,6 +10,7 @@ const generateAccessAndRefreshTokens = async (userId)=>{
     try {
         //finding user and generation
         const user = await User.findById(userId)
+
         const accessToken = user.generateAccessToken()
         const refreshToken = user.generateRefreshToken()
 
@@ -70,7 +71,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     //return response
     return res.status(201).json(
-        new apiResponse(200, creationCheck, "User regitsered successfully")
+        new apiResponse(200, creationCheck, "User registered successfully")
     )
 })
 
