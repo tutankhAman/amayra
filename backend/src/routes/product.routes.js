@@ -13,11 +13,9 @@ import { adminAuth } from "../middlewares/admin.middleware.js"
 
 const router = Router();
 
-
-router.route("/").get(getProduct)
-router.route("/:productId").get(getProductById)
 router.route("/search").get(searchProduct);
-
+router.route("/").get(getProduct);
+router.route("/:productId").get(getProductById);
 
 //----------secured routes----------//
 router.route("/create-product").post(
@@ -30,6 +28,5 @@ router.route("/create-product").post(
 )
 router.route("/update/:productId").put(upload.array("images", 5), verifyJWT, adminAuth, updateProduct)
 router.route("/delete/:productId").delete(verifyJWT, adminAuth, deleteProduct)
-
 
 export default router;

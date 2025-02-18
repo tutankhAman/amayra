@@ -65,54 +65,59 @@ const createProduct = asyncHandler(async (req, res) => {
 
 const getProduct = asyncHandler(async (req, res) => {
     try {
-        //fetching query parameters from req body
-        const { category, minPrice, sizes, maxPrice, sortBy, page = 1, limit = 20 } = req.query;
+        const { category, minPrice, maxPrice, sizes, sortBy, page = 1, limit = 20 } = req.query;
 
-        const min = minPrice ? Number(minPrice) : 0;
-        const max = maxPrice ? Number(maxPrice) : Infinity;
-        const pageNumber = Number(page) || 1
-        const limitNumber = Number(limit) || 20
-
-        //adding filters for sorting
-        const filters = {}
-        if (category) filters.category = category
-        if (sizes) filters.sizes = {
-            $in: sizes.split(",")
+        // Build filter object
+        const filters = {};
+        
+        // Category filter
+        if (category) filters.category = category;
+        
+        // Size filter - Fix sizes filter to handle array properly
+        if (sizes) {
+            filters.sizes = { $in: sizes.split(',') };
         }
-        filters.price = {
-            $gte: min,
-            $lte: max
-        }
-
-        //sorting logic
-        const sortOptions = {
-            priceLowToHigh: { price: 1 },
-            priceHighToLow: { price: -1 },
-            newest: { createdAt: -1 },
-            oldest: { createdAt: 1 }
+        
+        // Price filter
+        if (minPrice || maxPrice) {
+            filters.price = {};
+            if (minPrice) filters.price.$gte = Number(minPrice);
+            if (maxPrice) filters.price.$lte = Number(maxPrice);
         }
 
-        //default sort is newest
-        // use: /api/products?sortBy=priceLowToHigh
-        const sort = sortBy && sortOptions[sortBy] ? sortOptions[sortBy] : { createdAt: -1 };
+        // Sort configuration
+        let sortConfig = { createdAt: -1 }; // default sort
+        if (sortBy) {
+            switch (sortBy) {
+                case 'priceLowToHigh':
+                    sortConfig = { price: 1 };
+                    break;
+                case 'priceHighToLow':
+                    sortConfig = { price: -1 };
+                    break;
+                case 'newest':
+                    sortConfig = { createdAt: -1 };
+                    break;
+            }
+        }
 
-        //fetching from database based on filters
         const products = await Product.find(filters)
-        .sort(sort)
-        .limit(limitNumber)
-        .skip((pageNumber - 1) * limit)
+            .sort(sortConfig)
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit));
 
-        //existance check
-        if (products.length === 0) {
-            throw new apiError(404, "No products found")
+        if (!products.length) {
+            throw new apiError(404, "No products found");
         }
 
-        return res.status(200).json(new apiResponse(200, products, "Products fetched successfully"))
+        return res.status(200).json(
+            new apiResponse(200, products, "Products fetched successfully")
+        );
 
     } catch (error) {
-        throw new apiError(400, err?.message || "Something went wrong while fecthing products")
+        throw new apiError(400, error?.message || "Error while fetching products");
     }
-})
+});
 
 const getProductById = asyncHandler(async (req, res) => {
     //fetch id
@@ -233,30 +238,35 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
 const searchProduct = asyncHandler(async (req, res) => {
     try {
-        //fetching search query
-        const {search} = req.query;
-    
-        //matching with db
-        const searchQuery = search ? {
-            $or: [
-                { name: { $regex: search, $options: "i" } },  
-                { category: { $regex: search, $options: "i" } }  
-            ]
-        } : {};
-    
-        //fetching from db
-        const products = await Product.find(searchQuery)
-    
-        if (products.length === 0) {
-            throw new apiError(404, "No products found")
-        }
-    
-        //returning response
-        res.status(200).json(new apiResponse(200, products, "Products fetched successfully"));
-    } catch (error) {
-        throw new apiError(500, error?.message || "Something went wrong while searching for products")
-    }
+        const { search, page = 1, limit = 20 } = req.query;
 
-})
+        if (!search?.trim()) {
+            throw new apiError(400, "Search query is required");
+        }
+
+        const searchQuery = {
+            $or: [
+                { name: { $regex: search, $options: "i" } },
+                { category: { $regex: search, $options: "i" } },
+                { productId: { $regex: search, $options: "i" } }
+            ]
+        };
+
+        const products = await Product.find(searchQuery)
+            .limit(Number(limit))
+            .skip((Number(page) - 1) * Number(limit));
+
+        if (!products.length) {
+            throw new apiError(404, "No products found matching your search");
+        }
+
+        return res.status(200).json(
+            new apiResponse(200, products, products.length ? "Search results found successfully" : "No products found")
+        );
+
+    } catch (error) {
+        throw new apiError(500, error?.message || "Search operation failed");
+    }
+});
 
 export { createProduct, getProduct, getProductById, updateProduct, deleteProduct, searchProduct }
