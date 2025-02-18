@@ -12,7 +12,7 @@ module.exports = {
       },
     },
     fontFamily: {
-      headings: ["Playfair Display", "serif"],
+      heading: ["Playfair Display", "serif"],
       display: ['Lato', "serif"]
     }
   },

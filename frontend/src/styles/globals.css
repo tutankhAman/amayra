@@ -5,5 +5,10 @@
 
 body {
     @apply bg-base text-text font-display;
-    font-family: "Lora";
+    font-family: "Playfair Display";
+    margin-top: 2rem;
+}
+
+.heading {
+    font-family: "Playfair Display";
 }
