@@ -65,13 +65,16 @@ const createProduct = asyncHandler(async (req, res) => {
 
 const getProduct = asyncHandler(async (req, res) => {
     try {
-        const { category, minPrice, maxPrice, sizes, sortBy, page = 1, limit = 20 } = req.query;
+        const { category, type, minPrice, maxPrice, sizes, sortBy, page = 1, limit = 20 } = req.query;
 
         // Build filter object
         const filters = {};
         
         // Category filter
         if (category) filters.category = category;
+        
+        // Type filter
+        if (type) filters.type = type;
         
         // Size filter
         if (sizes) {

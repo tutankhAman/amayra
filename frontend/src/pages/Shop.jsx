@@ -10,6 +10,7 @@ const Shop = () => {
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
         category: '',
+        type: '', // Add type filter
         minPrice: '',
         maxPrice: '',
         sizes: [],
@@ -22,6 +23,7 @@ const Shop = () => {
 
     // Constants for filter options
     const categories = ['Sherwani', 'Kurta', 'Lehenga', 'Saree', 'Others'];
+    const types = ['Men', 'Women', 'Kids']; // Add types constant with the available options
     const availableSizes = ['S', 'M', 'L', 'XL'];
     const sortOptions = [
         { value: 'newest', label: 'Newest First' },
@@ -35,6 +37,7 @@ const Shop = () => {
             setLoading(true);
             const queryParams = {
                 category: filters.category || undefined,
+                type: filters.type || undefined, // Add type to query params
                 minPrice: filters.minPrice || undefined,
                 maxPrice: filters.maxPrice || undefined,
                 sizes: filters.sizes.length > 0 ? filters.sizes.join(',') : undefined,
@@ -127,6 +130,21 @@ const Shop = () => {
 
     const FiltersContent = () => (
         <div className="space-y-6">
+            {/* Type Filter - Add this new section */}
+            <div className="bg-white p-4 rounded-sm shadow">
+                <h3 className="text-xl font-semibold mb-3">Type</h3>
+                <select
+                    className="subheading w-full p-2 border rounded-md"
+                    value={filters.type}
+                    onChange={(e) => handleFilterChange('type', e.target.value)}
+                >
+                    <option value="">All Types</option>
+                    {types.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                    ))}
+                </select>
+            </div>
+
             {/* Category Filter */}
             <div className="bg-white p-4 rounded-sm shadow">
                 <h3 className="text-xl font-semibold mb-3">Categories</h3>

@@ -26,7 +26,7 @@ const productSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["Men", "Women", "Kid"],
+            enum: ["Men", "Women", "Kids"],
             default: "Men",
             required: true
         },
