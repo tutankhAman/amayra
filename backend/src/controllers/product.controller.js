@@ -73,7 +73,7 @@ const getProduct = asyncHandler(async (req, res) => {
         // Category filter
         if (category) filters.category = category;
         
-        // Size filter - Fix sizes filter to handle array properly
+        // Size filter
         if (sizes) {
             filters.sizes = { $in: sizes.split(',') };
         }
