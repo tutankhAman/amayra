@@ -1,10 +1,26 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaCartPlus } from "react-icons/fa";
 
 const ProductCard = ({ product }) => {
+    const navigate = useNavigate();
+
+    const handleCardClick = () => {
+        console.log('Navigating to product:', product._id); // Add debug log
+        navigate(`/product/${product._id}`); // Make sure we're using _id
+    };
+
+    const handleCartClick = (e) => {
+        e.stopPropagation(); // Prevent card click when clicking cart button
+        // Add to cart logic here
+    };
+
     return (
-        <div className="group relative bg-white/80 backdrop-blur-sm rounded-xl shadow-sm 
-            hover:shadow-lg transition-all duration-300 overflow-hidden">
+        <div 
+            onClick={handleCardClick}
+            className="group relative bg-white/80 backdrop-blur-sm rounded-xl shadow-sm 
+                hover:shadow-lg transition-all duration-300 overflow-hidden cursor-pointer"
+        >
             {/* Discount Badge */}
             <div className="absolute top-3 left-3 z-10">
                 <div className="px-3 py-1 bg-green-500/90 backdrop-blur-sm text-white 
@@ -21,9 +37,12 @@ const ProductCard = ({ product }) => {
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <button className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-primary p-3 
-                    rounded-full shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 
-                    group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95">
+                <button 
+                    onClick={handleCartClick}
+                    className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-primary p-3 
+                        rounded-full shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 
+                        group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95"
+                >
                     <FaCartPlus className="text-xl" />
                 </button>
             </div>

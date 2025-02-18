@@ -132,7 +132,7 @@ const getProductById = asyncHandler(async (req, res) => {
     }
 
     //fetch product form db based on that id
-    const product = await Product.findOne({ productId: productId })
+    const product = await Product.findById(productId)
 
     if (!product) {
         throw new apiError(404, "Id not found")
