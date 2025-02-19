@@ -15,13 +15,12 @@ export const UserProvider = ({ children }) => {
   const checkAuthStatus = async () => {
     try {
       const response = await apiClient.userService.getCurrentUser();
-      if (response?.data?.data) {
-        setUser(response.data.data);
+      if (response?.data?.data?.user) {
+        setUser(response.data.data.user);
       } else {
         setUser(null);
       }
     } catch (error) {
-      console.log("Auth check failed:", error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -32,12 +31,13 @@ export const UserProvider = ({ children }) => {
     checkAuthStatus();
   }, []);
 
-  // Redirect to login if accessing protected route without auth
+  // Only redirect on protected routes
   useEffect(() => {
-    if (!loading && !user && location.pathname !== '/login' && location.pathname !== '/signup') {
+    const publicRoutes = ['/login', '/signup', '/', '/shop'];
+    if (!loading && !user && !publicRoutes.includes(location.pathname)) {
       navigate('/login');
     }
-  }, [user, loading, location, navigate]);
+  }, [user, loading, location.pathname]);
 
   const login = async (credentials) => {
     setAuthLoading(true);
@@ -60,11 +60,13 @@ export const UserProvider = ({ children }) => {
     setAuthLoading(true);
     try {
       const response = await apiClient.userService.register(userData);
-      const newUser = response.data?.data;
-      if (newUser) {
-        setUser(newUser);
+      if (response?.data?.data?.user) {
+        const userData = response.data.data.user;
+        setUser(userData);
         toast.success('Account created successfully');
         navigate('/');
+      } else {
+        throw new Error('Invalid response format');
       }
       return response;
     } catch (error) {
@@ -79,10 +81,14 @@ export const UserProvider = ({ children }) => {
   const logout = async () => {
     setAuthLoading(true);
     try {
-      await apiClient.userService.logout();
-      setUser(null);
-      toast.success('Logged out successfully');
-      navigate('/login');
+      const response = await apiClient.userService.logout();
+      if (response.status === 200) {
+        setUser(null);
+        document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+        document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+        toast.success('Logged out successfully');
+        navigate('/login');
+      }
     } catch (error) {
       toast.error('Error logging out');
     } finally {
@@ -94,9 +100,10 @@ export const UserProvider = ({ children }) => {
     setAuthLoading(true);
     try {
       const response = await apiClient.userService.updateAccount(data);
-      setUser(response.data.data);
-      localStorage.setItem('user', JSON.stringify(response.data.data));
-      toast.success('Profile updated successfully');
+      if (response?.data?.data) {
+        setUser(response.data.data);
+        toast.success('Profile updated successfully');
+      }
       return response;
     } catch (error) {
       const message = error.response?.data?.message || 'Update failed';

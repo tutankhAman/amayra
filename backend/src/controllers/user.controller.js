@@ -26,54 +26,59 @@ const generateAccessAndRefreshTokens = async (userId)=>{
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-    //getting details
-    const { name, email, password } = req.body
-    // console.log("email:", email);
-
-    //validation
-    if (
-        [name, email, password].some((field) => field?.trim() === "")
-    ) {
-        throw new apiError(400, "All fields are required")
+    //getting infor from request body
+    const { name, email, password } = req.body;
+    
+    if ([name, email, password].some((field) => field?.trim() === "")) {
+        throw new apiError(400, "All fields are required");
     }
 
-    //checking for user existance
-    const userExistance = await User.findOne({
-        $or: [{ email }]
-    })
-    if (userExistance) {
-        throw new apiError(409, "Email already exists!")
+    //user existance check
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+        throw new apiError(409, "Email already exists!");
     }
 
-
-    //avatar upload
-    //checks if file is uplaoded on server and extracts its path
-    // const avatarLocalPath = req.files?.avatar[0]?.path;
-
-    // const avatar = await uploadOnCloudinary(avatarLocalPath)
-
-    //user object: create entry in db
     const newUser = await User.create({
         name,
         email,
         password
-    })
+    });
 
-    //check if user is created and remove password and refresh token from the response
-    const creationCheck = await User.findById(newUser._id).select(
+    // Generate tokens right after user creation
+    const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(newUser._id);
+
+    // Get user without sensitive data
+    const createdUser = await User.findById(newUser._id).select(
         "-password -refreshToken"
-    )
+    );
 
-    //check for user creation
-    if (!creationCheck) {
-        throw new apiError(500, "something went wrong while registering the user")
+    if (!createdUser) {
+        throw new apiError(500, "Something went wrong while registering the user");
     }
 
-    //return response
-    return res.status(201).json(
-        new apiResponse(200, creationCheck, "User registered successfully")
-    )
-})
+    const options = {
+        httpOnly: true,
+        secure: true
+    };
+
+    // Return response with cookies set
+    return res
+        .status(201)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new apiResponse(
+                201, 
+                {
+                    user: createdUser,
+                    accessToken,
+                    refreshToken
+                },
+                "User registered successfully"
+            )
+        );
+});
 
 const loginUser = asyncHandler(async (req, res) => {
     //req body from data
@@ -137,8 +142,9 @@ const logoutUser = asyncHandler(async(req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
-    }
+        secure: true,
+        path: '/'  // Add path to ensure cookies are cleared properly
+    };
     
     return res
     .status(200)
@@ -225,13 +231,19 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 
 //fetching current user using auth middleware
 const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req.user._id).select("-password -refreshToken");
+    if (!user) {
+        throw new apiError(404, "User not found");
+    }
     return res
     .status(200)
-    .json(new apiResponse(
-        200,
-        req.user,
-        "Current user fetched successfully"
-    ));
+    .json(
+        new apiResponse(
+            200,
+            { user },
+            "Current user fetched successfully"
+        )
+    );
 });
 
 const updateAccountDetails = asyncHandler(async(req, res) => {

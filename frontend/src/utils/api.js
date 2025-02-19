@@ -16,12 +16,13 @@ export const api = axios.create({
 // Simple request interceptor to check auth status
 api.interceptors.request.use(
   (config) => {
-    // Skip auth check for auth-related endpoints
-    if (config.url?.includes('login') || config.url?.includes('register')) {
+    // Skip auth check for public endpoints
+    const publicPaths = ['/users/login', '/users/register'];
+    if (publicPaths.some(path => config.url?.includes(path))) {
       return config;
     }
     
-    // Auth check header for protected routes
+    // Add auth check header for protected routes
     if (hasAuthCookie()) {
       config.headers['has-auth'] = 'true';
     }
