@@ -1,34 +1,57 @@
 import React, { useState } from 'react';
 import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi';
+import { useUser } from '../context/UserContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const { login, authLoading } = useUser();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle login logic here
+    try {
+      await login(formData);
+    } catch (error) {
+      // Error is handled by context
+    }
   };
 
   return (
-    <div className="flex justify-center items-center w-full min-h-screen py-8 bg-gradient-to-br from-gray-50 to-gray-100">
-      <div className="w-full max-w-[1200px] flex items-center">
-        {/* Left side - Image */}
+    <div className="relative flex justify-center items-center w-full min-h-screen py-8 bg-gradient-to-br from-gray-50 to-gray-100">
+      {/* Mobile Background - Only visible on mobile */}
+      <div className="absolute inset-0 lg:hidden">
+        <div 
+          className="absolute inset-0 w-full h-full z-0"
+          style={{
+            backgroundImage: `url('/src/assets/images/login-cover3.jpeg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        >
+          <div className="absolute inset-0 " />
+        </div>
+      </div>
+
+      <div className="relative w-full max-w-[1200px] flex items-center">
+        {/* Left side - Image (Desktop only) */}
         <div className="hidden lg:block lg:w-[45%]">
           <div className="p-6">
             <img
               src="/src/assets/images/login-cover3.jpeg"
               alt="Login Cover"
-              className="object-cover w-full rounded-xl "
+              className="object-cover w-full rounded-xl"
             />
           </div>
         </div>
 
         {/* Right side - Form */}
-        <div className="w-full lg:w-[55%] flex items-center justify-center px-8">
-          <div className="max-w-md w-full">
+        <div className="relative z-10 w-full lg:w-[55%] flex items-center justify-center px-8">
+          <div className="max-w-md w-full lg:bg-transparent lg:shadow-none 
+            backdrop-blur-md bg-white/80 rounded-2xl shadow-xl border border-white/40 lg:border-0 p-8 lg:p-0">
             <div className="text-center mb-10">
               <h2 className="text-4xl font-bold text-gray-900 mb-3">Welcome back</h2>
               <p className="subheading text-gray-600">Please enter your details to sign in</p>
@@ -89,9 +112,10 @@ const Login = () => {
 
               <button
                 type="submit"
+                disabled={authLoading}
                 className="group w-full bg-primary text-white py-3.5 rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium text-lg flex items-center justify-center gap-2"
               >
-                Sign in
+                {authLoading ? 'Signing in...' : 'Sign in'}
                 <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
               </button>
             </form>
