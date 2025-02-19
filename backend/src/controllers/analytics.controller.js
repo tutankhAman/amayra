@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
 import { apiResponse } from "../utils/apiResponse.js";
 import { Order } from "../models/order.models.js";
+import { Product } from "../models/product.models.js";  // Add this import
 import mongoose from "mongoose";
 
 // Helper function to create date filter
@@ -251,7 +252,79 @@ const getProductAnalytics = asyncHandler(async (req, res) => {
     }
 });
 
+const getTop3Products = asyncHandler(async (req, res) => {
+    try {
+        const topProducts = await Order.aggregate([
+            { 
+                $match: { orderStatus: "Completed" } 
+            },
+            { $unwind: "$products" },
+            {
+                $group: {
+                    _id: "$products.product",
+                    totalQuantitySold: { $sum: "$products.quantity" }
+                }
+            },
+            { $sort: { totalQuantitySold: -1 } },
+            { $limit: 3 },
+            {
+                $lookup: {
+                    from: "products",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "productDetails"
+                }
+            },
+            { $unwind: "$productDetails" },
+            {
+                $project: {
+                    _id: "$productDetails._id",
+                    name: "$productDetails.name",
+                    price: "$productDetails.price",
+                    discount: "$productDetails.discount",
+                    images: "$productDetails.images",
+                    productId: "$productDetails.productId",
+                    category: "$productDetails.category",
+                    type: "$productDetails.type",
+                    stock: "$productDetails.stock"
+                }
+            }
+        ]);
+
+        if (!topProducts?.length) {
+            const defaultProducts = await Product.find({
+                _id: {
+                    $in: [
+                        '67b30bfb6220ecc15cd8c7cf',
+                        '67b30c496220ecc15cd8c7d4',
+                        '67b30c9f6220ecc15cd8c7d9'
+                    ].map(id => new mongoose.Types.ObjectId(id))
+                }
+            }).select('name price discount images productId category type stock');
+
+            if (!defaultProducts?.length) {
+                throw new apiError(404, "Default products not found");
+            }
+
+            return res.status(200).json(
+                new apiResponse(200, defaultProducts, "Default products fetched successfully")
+            );
+        }
+
+        return res.status(200).json(
+            new apiResponse(200, topProducts, "Top selling products fetched successfully")
+        );
+
+    } catch (error) {
+        throw new apiError(
+            error.statusCode || 500, 
+            error?.message || "Failed to fetch top products"
+        );
+    }
+});
+
 export {
     getSalesAnalytics,
-    getProductAnalytics
+    getProductAnalytics,
+    getTop3Products
 };
