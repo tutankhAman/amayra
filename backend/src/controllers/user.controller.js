@@ -133,7 +133,7 @@ const logoutUser = asyncHandler(async(req, res) => {
                 refreshToken: undefined
             }
         }
-    )
+    );
 
     const options = {
         httpOnly: true,
@@ -142,8 +142,10 @@ const logoutUser = asyncHandler(async(req, res) => {
     
     return res
     .status(200)
-    .clearCookie()
-})
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new apiResponse(200, {}, "User logged out successfully"));
+});
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     //accessing refresh token form cookie
@@ -225,8 +227,12 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 const getCurrentUser = asyncHandler(async (req, res) => {
     return res
     .status(200)
-    .json(200, req.user, "current user fetched succesfully")
-})
+    .json(new apiResponse(
+        200,
+        req.user,
+        "Current user fetched successfully"
+    ));
+});
 
 const updateAccountDetails = asyncHandler(async(req, res) => {
     const {name, email, address, phone} = req.body

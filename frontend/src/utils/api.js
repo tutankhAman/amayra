@@ -1,17 +1,45 @@
 import axios from 'axios';
 
-const api = axios.create({
+// Helper to check if auth cookie exists
+const hasAuthCookie = () => {
+  return document.cookie.includes('accessToken=');
+};
+
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true // Enable sending cookies with requests
+  withCredentials: true
 });
 
-// Basic error handling interceptor
-api.interceptors.response.use(
-  (response) => response,
+// Simple request interceptor to check auth status
+api.interceptors.request.use(
+  (config) => {
+    // Skip auth check for auth-related endpoints
+    if (config.url?.includes('login') || config.url?.includes('register')) {
+      return config;
+    }
+    
+    // Auth check header for protected routes
+    if (hasAuthCookie()) {
+      config.headers['has-auth'] = 'true';
+    }
+    
+    return config;
+  },
   (error) => Promise.reject(error)
+);
+
+// Remove all interceptors and let the UserContext handle auth
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (!error.response || error.response.status !== 401) {
+      console.error('API Error:', error.response?.data?.message || 'An error occurred');
+    }
+    return Promise.reject(error);
+  }
 );
 
 // Base API methods - define once

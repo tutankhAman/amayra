@@ -1,11 +1,15 @@
-import React from 'react'
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const SignUp = () => {
   return (
-    <button className="bg-primary text-white font-bold py-2 px-6 rounded-full transform transition-all duration-300 hover:shadow-lg active:scale-95">
-      Sign In
-    </button>
-  )
-}
+    <Link
+      to="/login"
+      className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-3xl text-white bg-primary hover:bg-primary/90 transition-colors duration-200"
+    >
+      Sign in
+    </Link>
+  );
+};
 
-export default SignUp
+export default SignUp;
