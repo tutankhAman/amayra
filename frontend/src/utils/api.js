@@ -72,7 +72,8 @@ export const orderService = {
 
 export const analyticsService = {
   getSales: () => get('/analytics'),
-  getProduct: (productId) => post(`/analytics/product/${productId}`)
+  getProduct: (productId) => post(`/analytics/product/${productId}`),
+  getTopProducts: () => get('/analytics/top-products')
 };
 
 // Export everything as a default object
