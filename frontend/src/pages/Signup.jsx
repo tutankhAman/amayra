@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiMail, FiLock, FiArrowRight, FiUser, FiPhone } from 'react-icons/fi';
+import { FiMail, FiLock, FiArrowRight, FiUser, FiPhone, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -12,11 +12,41 @@ const SignUp = () => {
     password: ''
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { signup } = useUser();
   const navigate = useNavigate();
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[6-9]\d{9}$/;  // Indian phone number format
+    return phoneRegex.test(phone);
+  };
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    if (value.length <= 10) { // Limit to 10 digits
+      setFormData({ ...formData, phone: value });
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validation checks
+    if (!validateEmail(formData.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+
+    if (!validatePhone(formData.phone)) {
+      toast.error('Please enter a valid 10-digit phone number');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -106,7 +136,8 @@ const SignUp = () => {
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white"
                     placeholder="Enter your phone number"
                     value={formData.phone}
-                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    onChange={handlePhoneChange}
+                    maxLength={10}
                   />
                 </div>
               </div>
@@ -120,12 +151,19 @@ const SignUp = () => {
                     <FiLock size={20} />
                   </span>
                   <input
-                    type="password"
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white"
+                    type={showPassword ? "text" : "password"}
+                    className="w-full pl-12 pr-12 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white"
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+                  >
+                    {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                  </button>
                 </div>
               </div>
 
