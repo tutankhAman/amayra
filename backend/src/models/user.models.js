@@ -19,10 +19,12 @@ const userSchema = new mongoose.Schema({
     },
     avatar:{
         type: String,
-        default: ''
+        default: 'https://res.cloudinary.com/dh0xbfq7w/image/upload/v1740070547/zro6ynfqi5a3foycxhtc.png'
     },
     email:{
         type:String,
+        unique: true,
+        sparse: true
     },
     address:{
         type: String

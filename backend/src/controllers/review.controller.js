@@ -50,22 +50,34 @@ const addReview = asyncHandler(async (req, res) => {
     res.status(201).json(new apiResponse(201, review, "Review added successfully"))
 })
 
-const getReview = asyncHandler(async (req,res) => {
-    const {productId} = req.body
+const getReview = asyncHandler(async (req, res) => {
+    const { productId } = req.body;
+    const userId = req.user?._id; // Will be undefined for non-authenticated users
 
-    const product = await Product.findOne({productId: productId })
-    console.log(productId)
+    const product = await Product.findOne({ productId });
 
     if (!product) {
-        throw new apiError(404, `product with productid ${productId} doesnt exist`)
+        throw new apiError(404, `Product with productId ${productId} doesn't exist`);
     }
     
-    const productReviews = await Review.find({product: product._id})
-    .populate("user", "name avatar")
-    .sort({createdAt: -1})
- 
-    res.status(200).json(new apiResponse(200, productReviews, "Reviews fetched successfully"))
-})
+    // Fetch reviews and populate user details
+    const productReviews = await Review.find({ product: product._id })
+        .populate('user', 'name avatar')
+        .sort({ createdAt: -1 });
+
+    // Map reviews and add isOwner flag
+    const reviewsWithOwnership = productReviews.map(review => {
+        const reviewObj = review.toObject();
+        return {
+            ...reviewObj,
+            isOwner: userId ? reviewObj.user._id.toString() === userId.toString() : false
+        };
+    });
+
+    res.status(200).json(
+        new apiResponse(200, reviewsWithOwnership, "Reviews fetched successfully")
+    );
+});
 
 const deleteReview = asyncHandler(async (req, res) => {
     // Getting reviewId from request body

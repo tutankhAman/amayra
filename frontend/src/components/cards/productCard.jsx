@@ -52,18 +52,18 @@ const ProductCard = ({ product }) => {
                 <h3 className="font-semibold text-xl text-gray-900 group-hover:text-primary transition-colors duration-300">
                     {product.name}
                 </h3>
-                <p className="subheading2 text-sm text-gray-500 mt-1">{product.productId}</p>
+                <p className="subheading text-sm text-gray-500 mt-1">{product.productId}</p>
                 
                 <div className="mt-3 flex items-center justify-between">
                     <div className="space-y-1">
-                        <span className="subheading2 text-lg font-bold text-primary">
+                        <span className="subheading text-lg font-bold text-primary">
                             ₹{product.price - product.discount}
                         </span>
-                        <div className="subheading2 text-sm text-gray-400 line-through">
+                        <div className="subheading text-sm text-gray-400 line-through">
                             ₹{product.price}
                         </div>
                     </div>
-                    <div className="subheading2 text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded">
+                    <div className="subheading text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded">
                         {Math.round((product.discount / product.price) * 100)}% OFF
                     </div>
                 </div>

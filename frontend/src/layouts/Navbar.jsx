@@ -17,7 +17,7 @@ const Navbar = () => {
 
   // Profile Dropdown Component
   const ProfileDropdown = () => (
-    <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5">
+    <div className="z-50 absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5">
       <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
         <p className="font-medium">{user?.name}</p>
         <p className="text-xs text-gray-500">{user?.email}</p>

@@ -1,8 +1,24 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Shop from '../components/buttons/Shop'
 import ProductCard from '../components/cards/productCard'
+import { analyticsService } from '../utils/api'
 
 const Home = () => {
+    const [bestSellers, setBestSellers] = useState([]);
+
+    useEffect(() => {
+        const fetchBestSellers = async () => {
+            try {
+                const response = await analyticsService.getTopProducts();
+                setBestSellers(response.data.data);
+            } catch (error) {
+                console.error('Failed to fetch best sellers:', error);
+            }
+        };
+
+        fetchBestSellers();
+    }, []);
+
     return (
         <div className='flex flex-col items-center w-full'>
             <div className="w-full max-w-[1200px] px-4 sm:px-6 md:px-8">
@@ -36,6 +52,22 @@ const Home = () => {
                         ))}
                     </div>
                 </div>
+            </div>
+
+            {/* Best Sellers Section */}
+            <div className='w-full max-w-[1200px] px-4 sm:px-6 md:px-8 mb-16'>
+                <h2 className='heading text-5xl sm:text-3xl lg:text-5xl font-bold mb-10 mt-8 text-center'>
+                — Our Best Sellers —
+                </h2>
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
+                    {bestSellers.map((product) => (
+                        <ProductCard key={product._id} product={product} />
+                    ))}
+                </div>
+            </div>
+
+            <div className='mb-8'>
+            <Shop />
             </div>
         </div>        
     )

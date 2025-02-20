@@ -83,10 +83,10 @@ export const cartService = {
 
 // Product reviews
 export const reviewService = {
-  get: () => get('/reviews'),
-  add: (data) => post('/reviews/add', data),
-  update: (data) => put('/reviews/update', data),
-  delete: () => del('/reviews/delete')
+  get: (productId) => api.post('/reviews', { productId }),
+  add: (data) => api.post('/reviews/add', data),
+  update: (data) => api.put('/reviews/update', data),
+  delete: (reviewId) => api.delete('/reviews/delete', { data: { reviewId } })
 };
 
 // Order processing
