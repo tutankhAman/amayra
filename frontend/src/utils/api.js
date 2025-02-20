@@ -1,10 +1,12 @@
+// API configuration and services
 import axios from 'axios';
 
-// Helper to check if auth cookie exists
+// Check for auth token in cookies
 const hasAuthCookie = () => {
   return document.cookie.includes('accessToken=');
 };
 
+// Create axios instance with default config
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
   headers: {
@@ -13,26 +15,19 @@ export const api = axios.create({
   withCredentials: true
 });
 
-// Simple request interceptor to check auth status
+// Add auth check for protected routes
 api.interceptors.request.use(
   (config) => {
-    // Skip auth check for public endpoints
     const publicPaths = ['/users/login', '/users/register'];
-    if (publicPaths.some(path => config.url?.includes(path))) {
-      return config;
-    }
+    if (publicPaths.some(path => config.url?.includes(path))) return config;
     
-    // Add auth check header for protected routes
-    if (hasAuthCookie()) {
-      config.headers['has-auth'] = 'true';
-    }
-    
+    if (hasAuthCookie()) config.headers['has-auth'] = 'true';
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Remove all interceptors and let the UserContext handle auth
+// Global error handling
 api.interceptors.response.use(
   response => response,
   error => {
@@ -43,7 +38,7 @@ api.interceptors.response.use(
   }
 );
 
-// Base API methods - define once
+// Base HTTP methods
 const apiMethods = {
   get: (url, params) => api.get(url, { params }),
   post: (url, data) => api.post(url, data),
@@ -51,10 +46,9 @@ const apiMethods = {
   del: (url) => api.delete(url)
 };
 
-// Destructure methods for services to use
 const { get, post, put, del } = apiMethods;
 
-// API Services
+// User authentication and profile management
 export const userService = {
   register: (formData) => post('/users/register', formData),
   login: (data) => post('/users/login', data),
@@ -69,6 +63,7 @@ export const userService = {
   removeFromWishlist: (data) => del('/users/wishlist', data)
 };
 
+// Product CRUD operations
 export const productService = {
   getAll: (params) => get('/product', params),
   getById: (id) => get(`/product/${id}`),
@@ -78,6 +73,7 @@ export const productService = {
   delete: (id) => del(`/product/delete/${id}`)
 };
 
+// Shopping cart management
 export const cartService = {
   get: () => get('/cart'),
   add: (data) => post('/cart/add', data),
@@ -85,6 +81,7 @@ export const cartService = {
   remove: (data) => del('/cart/delete', data)
 };
 
+// Product reviews
 export const reviewService = {
   get: () => get('/reviews'),
   add: (data) => post('/reviews/add', data),
@@ -92,6 +89,7 @@ export const reviewService = {
   delete: () => del('/reviews/delete')
 };
 
+// Order processing
 export const orderService = {
   create: (data) => post('/order/create', data),
   getUserOrders: () => get('/order/user-orders'),
@@ -99,13 +97,14 @@ export const orderService = {
   updateStatus: (orderId, data) => put(`/order/${orderId}/status`, data)
 };
 
+// Analytics and reporting
 export const analyticsService = {
   getSales: () => get('/analytics'),
   getProduct: (productId) => post(`/analytics/product/${productId}`),
   getTopProducts: () => get('/analytics/top-products')
 };
 
-// Export everything as a default object
+// Export all services
 export default {
   ...apiMethods,
   api,
