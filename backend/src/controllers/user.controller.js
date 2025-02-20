@@ -26,26 +26,33 @@ const generateAccessAndRefreshTokens = async (userId)=>{
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-    //getting infor from request body
-    const { name, phone, password } = req.body;
+    // Get data from request body and validate
+    const { name, email, phone, password } = req.body;
     
-    if ([name, phone, password].some((field) => field?.trim() === "")) {
-        throw new apiError(400, "All fields are required");
+    console.log("Registration attempt:", { name, email, phone }); // Debug log
+    
+    if ([name, email, phone, password].some((field) => !field?.trim())) {
+        throw new apiError(400, "All fields (name, email, phone, password) are required");
     }
 
-    //user existance check
-    const userExists = await User.findOne({ phone });
-    if (userExists) {
-        throw new apiError(409, "Phone no. already exists!");
+    // Check for existing user by email or phone
+    const existingUser = await User.findOne({
+        $or: [{ email }, { phone }]
+    });
+
+    if (existingUser) {
+        throw new apiError(409, "User with this email or phone already exists");
     }
 
+    // Create new user
     const newUser = await User.create({
         name,
+        email,
         phone,
         password
     });
 
-    // Generate tokens right after user creation
+    // Generate tokens
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(newUser._id);
 
     // Get user without sensitive data

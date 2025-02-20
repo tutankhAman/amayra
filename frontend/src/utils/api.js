@@ -8,7 +8,7 @@ const hasAuthCookie = () => {
 
 // Create axios instance with default config
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1',
+  baseURL: 'http://localhost:8000/api/v1',
   headers: {
     'Content-Type': 'application/json'
   },
@@ -50,7 +50,19 @@ const { get, post, put, del } = apiMethods;
 
 // User authentication and profile management
 export const userService = {
-  register: (formData) => post('/users/register', formData),
+  register: async (userData) => {
+    try {
+      const response = await api.post('/users/register', {
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        password: userData.password
+      });
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
   login: (data) => post('/users/login', data),
   logout: () => post('/users/logout'),
   refreshToken: () => post('/users/refresh-token'),

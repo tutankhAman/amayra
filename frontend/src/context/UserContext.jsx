@@ -60,12 +60,27 @@ export const UserProvider = ({ children }) => {
   const signup = async (userData) => {
     setAuthLoading(true);
     try {
-      const response = await apiClient.userService.register(userData);
-      setUser(response?.data?.data?.user || null);
-      toast.success('Account created successfully');
-      navigate('/');
+      // Validate required fields before making API call
+      if (!userData.email) {
+        throw new Error('Email is required');
+      }
+      
+      const response = await apiClient.userService.register({
+        name: userData.name,
+        email: userData.email,
+        phone: userData.phone,
+        password: userData.password
+      });
+      
+      if (response?.data?.data?.user) {
+        setUser(response.data.data.user);
+        return response.data;
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Registration failed');
+      const errorMessage = error.response?.data?.message || error.message || 'Registration failed';
+      toast.error(errorMessage);
       throw error;
     } finally {
       setAuthLoading(false);
