@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FiMail, FiLock, FiArrowRight, FiUser } from 'react-icons/fi';
+import { FiMail, FiLock, FiArrowRight, FiUser, FiPhone } from 'react-icons/fi';
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
@@ -7,7 +7,7 @@ import { toast } from 'react-hot-toast';
 const SignUp = () => {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
+    phone: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -76,18 +76,18 @@ const SignUp = () => {
 
               <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Email address
+                  Phone Number
                 </label>
                 <div className="relative">
                   <span className="subheading absolute inset-y-0 left-3 flex items-center text-gray-400">
-                    <FiMail size={20} />
+                    <FiPhone size={20} />
                   </span>
                   <input
-                    type="email"
+                    type="tel"
                     className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white/50 backdrop-blur-sm hover:bg-white"
-                    placeholder="Enter your email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    placeholder="Enter your phone number"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   />
                 </div>
               </div>

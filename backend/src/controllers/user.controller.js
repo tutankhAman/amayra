@@ -27,21 +27,21 @@ const generateAccessAndRefreshTokens = async (userId)=>{
 
 const registerUser = asyncHandler(async (req, res) => {
     //getting infor from request body
-    const { name, email, password } = req.body;
+    const { name, phone, password } = req.body;
     
-    if ([name, email, password].some((field) => field?.trim() === "")) {
+    if ([name, phone, password].some((field) => field?.trim() === "")) {
         throw new apiError(400, "All fields are required");
     }
 
     //user existance check
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ phone });
     if (userExists) {
-        throw new apiError(409, "Email already exists!");
+        throw new apiError(409, "Phone no. already exists!");
     }
 
     const newUser = await User.create({
         name,
-        email,
+        phone,
         password
     });
 
@@ -82,13 +82,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
     //req body from data
-    const { email, password } = req.body
-    if (!email && !password) {
-        throw new apiError(400, "email or password is required")
+    const { phone, password } = req.body
+    if (!phone && !password) {
+        throw new apiError(400, "phone no. or password is required")
     }
 
     //find user in db
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ phone })
 
     if (!user) {
         throw new apiError(404, "User does not exist. Please Register!");
@@ -249,7 +249,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateAccountDetails = asyncHandler(async(req, res) => {
     const {name, email, address, phone} = req.body
 
-    if(!name || !email){
+    if(!name || !phone){
         throw new apiError(400, "All fields are required")
     }
 
