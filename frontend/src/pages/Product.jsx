@@ -4,6 +4,7 @@ import { productService, reviewService } from '../utils/api';
 import { FiMinus, FiPlus, FiHeart, FiShare2, FiStar, FiEdit2, FiTrash2, FiMessageCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ProductCard from '../components/cards/productCard';
+import { useCart } from '../context/CartContext';
 
 const ImageGallery = ({ images }) => {
     const [mainImage, setMainImage] = useState(images?.[0]);
@@ -342,6 +343,8 @@ const Product = () => {
     const [quantity, setQuantity] = useState(1);
     const [relatedProducts, setRelatedProducts] = useState([]);
     const [reviews, setReviews] = useState([]);
+    const { addToCart, loading: cartLoading } = useCart();
+    const [addingToCart, setAddingToCart] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -376,6 +379,44 @@ const Product = () => {
             fetchProduct();
         }
     }, [id]);
+
+    const handleAddToCart = async () => {
+        if (!selectedSize) {
+            toast.error('Please select a size');
+            return;
+        }
+
+        if (quantity < 1) {
+            toast.error('Please select a valid quantity');
+            return;
+        }
+
+        if (quantity > (product?.stock || 0)) {
+            toast.error('Selected quantity exceeds available stock');
+            return;
+        }
+
+        setAddingToCart(true);
+        try {
+            const cartData = {
+                productId: product._id,
+                quantity: quantity,
+                size: selectedSize.toUpperCase() // Ensure size is uppercase
+            };
+            
+            console.log('Sending cart data:', cartData); // Debug log
+            await addToCart(cartData);
+            
+            setQuantity(1);
+            setSelectedSize('');
+            toast.success('Added to cart successfully');
+        } catch (error) {
+            console.error('Product page cart error:', error);
+            toast.error(error?.response?.data?.message || 'Failed to add to cart');
+        } finally {
+            setAddingToCart(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -478,9 +519,21 @@ const Product = () => {
 
                         {/* Action Buttons */}
                         <div className="flex gap-4">
-                            <button className="flex-1 bg-primary text-white px-8 py-4 rounded-md font-medium
-                                hover:bg-primary/90 active:scale-95 transition-all duration-300">
-                                Add to Cart
+                            <button 
+                                onClick={handleAddToCart}
+                                disabled={addingToCart || cartLoading}
+                                className="flex-1 bg-primary text-white px-8 py-4 rounded-md font-medium
+                                    hover:bg-primary/90 active:scale-95 transition-all duration-300
+                                    disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            >
+                                {addingToCart ? (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin" />
+                                        Adding...
+                                    </div>
+                                ) : (
+                                    'Add to Cart'
+                                )}
                             </button>
                             <button className="p-4 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
                                 <FiHeart className="text-xl" />
