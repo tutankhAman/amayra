@@ -5,210 +5,160 @@ import { Product } from "../models/product.models.js";
 import { Cart } from "../models/cart.models.js";
 
 const addToCart = asyncHandler(async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { productId, quantity = 1, size } = req.body;
-        
-        console.log('Raw request body:', req.body); // Debug log
+    //fetching from body, size and quantity set to default values
+    const { productId, quantity = 1, size = "Free Size" } = req.body;
+    const userId = req.user._id;
 
-        // Validate input
-        if (!productId || !size) {
-            throw new apiError(400, "Product ID and size are required");
-        }
+    //checking if product exists
+    const product = await Product.findById(productId);
+    if (!product) {
+        throw new apiError(404, "Product not found");
+    }
 
-        const normalizedSize = size.toUpperCase(); // Normalize size
-        console.log('Normalized size:', normalizedSize); // Debug log
+    //size validation
+    if (!product.sizes.includes(size)) {
+        throw new apiError(400, "Selected size not available");
+    }
 
-        // Find product first
-        const product = await Product.findById(productId);
-        if (!product) {
-            throw new apiError(404, "Product not found");
-        }
+    //quantity validation
+    if (product.stock < quantity) {
+        throw new apiError(400, "Insufficient stock");
+    }
 
-        // Calculate price
-        const finalPrice = product.price - (product.discount || 0);
-
-        // Prepare cart item
-        const cartItem = {
-            product: productId,
-            quantity: quantity,
-            size: normalizedSize,
-            price: finalPrice
-        };
-
-        console.log('Cart item to be added:', cartItem); // Debug log
-
-        // Find or create cart
-        let cart = await Cart.findOne({ user: userId });
-
-        if (!cart) {
-            // Create new cart explicitly
-            cart = await Cart.create({
-                user: userId,
-                products: [cartItem],
-                totalPrice: finalPrice * quantity
-            });
-        } else {
-            // Check if product with same size exists
-            const existingProductIndex = cart.products.findIndex(
-                p => p.product.toString() === productId && p.size === size
-            );
-
-            if (existingProductIndex !== -1) {
-                // Update existing product
-                cart.products[existingProductIndex].quantity += quantity;
-            } else {
-                // Add new product
-                cart.products.push({
-                    product: productId,
-                    quantity,
-                    size,
-                    price: finalPrice
-                });
-            }
-
-            // Update total price
-            cart.totalPrice = cart.products.reduce((total, item) => 
-                total + (item.price * item.quantity), 0
-            );
-        }
-
-        // Populate and return
-        const populatedCart = await Cart.findById(cart._id)
-            .populate('products.product')
-            .select('-__v');
-
-        return res.status(200).json(
-            new apiResponse(200, populatedCart, "Product added to cart successfully")
-        );
-
-    } catch (error) {
-        console.error("Cart Error Details:", {
-            error: error.message,
-            stack: error.stack,
-            body: req.body
+    //checking if cart exists
+    let cart = await Cart.findOne({ user: userId });
+    
+    //creating cart if not exists
+    if (!cart) {
+        cart = await Cart.create({
+            user: userId,
+            items: [{
+                product: productId,
+                quantity,
+                size,
+                price: product.price,
+            }]
         });
-        throw error;
-    }
-});
-
-//get
-const getCart = asyncHandler(async (req, res) => {
-    try {
-        //extract the user id from request
-        const userId = req.user._id
-    
-        //find cart based on userid
-        const cart = await Cart.findOne({user: userId}).populate({
-            path: "products.product",
-            select: "images name productId quantity price"
-        })
-        .select ("products totalPrice")
-    
-        //return cart data
-        res.status(200).json(new apiResponse(200, cart, "Cart fetched successfully"))
-    } catch (error) {
-        throw new apiError(500, error?.message ||"Something went wrong while fetching the cart")
-    }
-})
-
-//remove
-const removeFromCart = asyncHandler(async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { productId, size } = req.body;
-
-        if (!size) {
-            throw new apiError(400, "Size is required");
-        }
-
-        const cart = await Cart.findOne({ user: userId });
-        if (!cart) {
-            throw new apiError(404, "Cart not found");
-        }
-
-        const productInCart = cart.products.find(
-            p => p.product.toString() === productId && p.size === size
+    } else {
+        //checking if item already exists in cart
+        const existingItem = cart.items.find(
+            item => item.product.toString() === productId && item.size === size
         );
 
-        if (!productInCart) {
-            throw new apiError(404, "Product with selected size not found in cart");
-        }
-
-        const productPrice = productInCart.price;
-
-        if (productInCart.quantity > 1) {
-            await Cart.findOneAndUpdate(
-                { user: userId, "products.product": productId, "products.size": size },
-                {
-                    $inc: {
-                        "products.$.quantity": -1,
-                        totalPrice: -productPrice
-                    }
-                },
-                { new: true }
-            );
+        //updating quantity and subtotal if item exists
+        if (existingItem) {
+            existingItem.quantity += quantity;
+            existingItem.subtotal = existingItem.quantity * existingItem.price;
         } else {
-            await Cart.findOneAndUpdate(
-                { user: userId },
-                {
-                    $pull: {
-                        products: { product: productId, size }
-                    },
-                    $inc: { totalPrice: -productPrice }
-                },
-                { new: true }
-            );
+            cart.items.push({
+                product: productId,
+                quantity,
+                size,
+                price: product.price,
+            });
         }
-
-        res.status(200).json(new apiResponse(200, cart, "Product removed from cart successfully"));
-    } catch (error) {
-        throw new apiError(500, error?.message || "Something went wrong while removing product from cart");
+        await cart.save();
     }
+
+    return res.status(200).json(
+        new apiResponse(200, cart, "Item added to cart successfully")
+    );
 });
 
+const getCart = asyncHandler(async (req, res) => {
+    const cart = await Cart.findOne({ user: req.user._id })
+        .populate({
+            path: 'items.product',
+            select: 'name productId price discount type category sizes images stock'
+        });
 
-//update
-const updateCart = asyncHandler(async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { productId, quantity, size } = req.body;
-
-        if (quantity < 1) {
-            throw new apiError(400, "Quantity must be at least 1");
-        }
-        if (!size) {
-            throw new apiError(400, "Size is required");
-        }
-
-        const cart = await Cart.findOne({ user: userId, "products.product": productId, "products.size": size });
-
-        if (!cart) {
-            throw new apiError(404, "Cart not found or product not in cart");
-        }
-
-        const productInCart = cart.products.find(p => p.product.toString() === productId && p.size === size);
-        if (!productInCart) {
-            throw new apiError(404, "Product with selected size not found in cart");
-        }
-
-        const productPrice = productInCart.price;
-
-        const updatedCart = await Cart.findOneAndUpdate(
-            { user: userId, "products.product": productId, "products.size": size },
-            {
-                $set: { "products.$.quantity": quantity },
-                $inc: { totalPrice: (quantity - productInCart.quantity) * productPrice }
-            },
-            { new: true }
-        );
-
-        res.status(200).json(new apiResponse(200, updatedCart, "Cart updated successfully"));
-
-    } catch (error) {
-        throw new apiError(500, error?.message || "Something went wrong while updating cart");
+    if (!cart) {
+        throw new apiError(404, "Cart not found");
     }
+
+    return res.status(200).json(
+        new apiResponse(200, cart, "Cart retrieved successfully")
+    );
 });
 
+const updateCartItem = asyncHandler(async (req, res) => {
+    //getting stuff from body
+    const { productId, quantity, size } = req.body;
+    
+    //finding cart
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+        throw new apiError(404, "Cart not found");
+    }
 
-export { addToCart, getCart, removeFromCart, updateCart };
+    //finding item in cart
+    const itemIndex = cart.items.findIndex(
+        item => item.product.toString() === productId && item.size === size
+    );
+
+    if (itemIndex === -1) {
+        throw new apiError(404, "Item not found in cart");
+    }
+
+    //updating quantity and subtotal
+    if (quantity <= 0) {
+        cart.items.splice(itemIndex, 1);
+    } else {
+        const product = await Product.findById(productId);
+        if (product.stock < quantity) {
+            throw new apiError(400, "Insufficient stock");
+        }
+        
+        cart.items[itemIndex].quantity = quantity;
+        cart.items[itemIndex].subtotal = quantity * cart.items[itemIndex].price;
+    }
+
+    await cart.save();
+
+    return res.status(200).json(
+        new apiResponse(200, cart, "Cart updated successfully")
+    );
+});
+
+const removeFromCart = asyncHandler(async (req, res) => {
+    //requesting stuff from body
+    const { productId, size } = req.body;
+    
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+        throw new apiError(404, "Cart not found");
+    }
+
+    cart.items = cart.items.filter(
+        item => !(item.product.toString() === productId && item.size === size)
+    );
+    
+    await cart.save();
+
+    return res.status(200).json(
+        new apiResponse(200, cart, "Item removed from cart successfully")
+    );
+});
+
+const clearCart = asyncHandler(async (req, res) => {
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+        throw new apiError(404, "Cart not found");
+    }
+
+    cart.items = [];
+    await cart.save();
+
+    return res.status(200).json(
+        new apiResponse(200, cart, "Cart cleared successfully")
+    );
+});
+
+export {
+    addToCart,
+    getCart,
+    updateCartItem,
+    removeFromCart,
+    clearCart
+}
+
