@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Shop from '../components/buttons/Shop'
 import ProductCard from '../components/cards/productCard'
 import { analyticsService } from '../utils/api'
 
 const Home = () => {
+    const navigate = useNavigate();
     const [bestSellers, setBestSellers] = useState([]);
 
     useEffect(() => {
@@ -18,6 +20,10 @@ const Home = () => {
 
         fetchBestSellers();
     }, []);
+
+    const handleCategoryNavigation = (category) => {
+        navigate(`/shop?category=${category}`);
+    };
 
     return (
         <div className='flex flex-col items-center w-full'>
@@ -42,9 +48,10 @@ const Home = () => {
                 <h2 className='heading text-2xl sm:text-4xl font-bold'>Our collection:</h2>
                 <div className='w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0'>
                     <div className='flex w-max sm:w-auto'>
-                        {['Kurta', 'Pajama', 'Indo-western', 'Sherwani', 'Lehenga'].map((item) => (
+                        {['Kurta', 'Pajama', 'Indo-Western', 'Sherwani', 'Lehenga'].map((item) => (
                             <button 
                                 key={item} 
+                                onClick={() => handleCategoryNavigation(item)}
                                 className='px-4 border-x border-gray-500 h-10 font-semibold whitespace-nowrap transition-colors duration-300 hover:bg-tertiary/80'
                             >
                                 {item}

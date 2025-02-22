@@ -6,13 +6,12 @@ const ProductCard = ({ product }) => {
     const navigate = useNavigate();
 
     const handleCardClick = () => {
-        console.log('Navigating to product:', product._id); // Add debug log
-        navigate(`/product/${product._id}`); // Make sure we're using _id
+        console.log('Navigating to product:', product._id);
+        navigate(`/product/${product._id}`); 
     };
 
     const handleCartClick = (e) => {
-        e.stopPropagation(); // Prevent card click when clicking cart button
-        // Add to cart logic here
+        e.stopPropagation(); 
     };
 
     return (
@@ -37,14 +36,14 @@ const ProductCard = ({ product }) => {
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                 />
                 <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <button 
+                {/* <button 
                     onClick={handleCartClick}
                     className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm text-primary p-3 
                         rounded-full shadow-lg transform translate-y-12 opacity-0 group-hover:translate-y-0 
                         group-hover:opacity-100 transition-all duration-300 hover:scale-110 active:scale-95"
                 >
                     <FaCartPlus className="text-xl" />
-                </button>
+                </button> */}
             </div>
 
             {/* Product Details */}

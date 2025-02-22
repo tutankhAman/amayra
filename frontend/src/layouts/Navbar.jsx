@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaSearch, FaShoppingCart, FaBars, FaUserCircle } from 'react-icons/fa';
 import { useUser } from '../context/UserContext';
+import { useCart } from '../context/CartContext';
 import SignUp from '../components/buttons/SignUp';
 
 const Navbar = () => {
@@ -9,10 +10,19 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useUser();
+  const { cart } = useCart();
+  const navigate = useNavigate();
+  
+  const cartItemsCount = cart?.items?.length || 0;
 
   const handleLogout = async () => {
     await logout();
     setIsProfileOpen(false);
+  };
+
+  const handleTypeNavigation = (type) => {
+    navigate(`/shop?type=${type}`);
+    setIsMenuOpen(false);
   };
 
   // Profile Dropdown Component
@@ -91,15 +101,24 @@ const Navbar = () => {
             <Link to="/shop" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
               Shop
             </Link>
-            <Link to="/men" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+            <button 
+              onClick={() => handleTypeNavigation('Men')} 
+              className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300"
+            >
               Men
-            </Link>
-            <Link to="/women" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+            </button>
+            <button 
+              onClick={() => handleTypeNavigation('Women')} 
+              className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300"
+            >
               Women
-            </Link>
-            <Link to="/kids" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+            </button>
+            <button 
+              onClick={() => handleTypeNavigation('Kids')} 
+              className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300"
+            >
               Kids
-            </Link>
+            </button>
             <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
               Contact
             </Link>
@@ -135,9 +154,11 @@ const Navbar = () => {
             {/* Cart Icon */}
             <Link to="/cart" className="text-gray-700 hover:text-black relative transition-colors duration-300">
               <FaShoppingCart className="h-6 w-6" />
-              <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                0
-              </span>
+              {cartItemsCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {cartItemsCount}
+                </span>
+              )}
             </Link>
 
             {/* Profile/Signup Button - Desktop only */}
@@ -175,15 +196,24 @@ const Navbar = () => {
 
         {/* Mobile Navigation Links */}
         <div className="px-2 pt-2 pb-3 space-y-1">
-          <Link to="/men" className="block px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+          <button 
+            onClick={() => handleTypeNavigation('Men')} 
+            className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300"
+          >
             Men
-          </Link>
-          <Link to="/women" className="block px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+          </button>
+          <button 
+            onClick={() => handleTypeNavigation('Women')} 
+            className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300"
+          >
             Women
-          </Link>
-          <Link to="/kids" className="block px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+          </button>
+          <button 
+            onClick={() => handleTypeNavigation('Kids')} 
+            className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300"
+          >
             Kids
-          </Link>
+          </button>
           <Link to="/contact" className="block px-3 py-2 text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
             Contact
           </Link>

@@ -32,7 +32,7 @@ const productSchema = new mongoose.Schema(
         },
         category: {
             type: String,
-            enum: ["Sherwani", "Kurta", "Lehenga", "Saree", "Others"],
+            enum: ["Sherwani", "Kurta", "Lehenga", "Saree", "Pajama", "Indo-Western", "Others"],
             required: true,
         },
         sizes: {

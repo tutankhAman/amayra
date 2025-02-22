@@ -3,8 +3,10 @@ import { productService } from '../utils/api';
 import ProductCard from '../components/cards/productCard';
 import debounce from 'lodash/debounce';
 import { FiFilter, FiX } from 'react-icons/fi'; // Import icons
+import { useSearchParams } from 'react-router-dom';
 
 const Shop = () => {
+    const [searchParams] = useSearchParams();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -22,8 +24,8 @@ const Shop = () => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     // Constants for filter options
-    const categories = ['Sherwani', 'Kurta', 'Lehenga', 'Saree', 'Others'];
-    const types = ['Men', 'Women', 'Kids']; // Add types constant with the available options
+    const categories = ["Kurta", "Pajama", "Lehenga", "Sherwani", "Saree",  "Indo-Western", "Others"];
+    const types = ['Men', 'Women', 'Kids']; 
     const availableSizes = ['S', 'M', 'L', 'XL'];
     const sortOptions = [
         { value: 'newest', label: 'Newest First' },
@@ -37,7 +39,7 @@ const Shop = () => {
             setLoading(true);
             const queryParams = {
                 category: filters.category || undefined,
-                type: filters.type || undefined, // Add type to query params
+                type: filters.type || undefined, 
                 minPrice: filters.minPrice || undefined,
                 maxPrice: filters.maxPrice || undefined,
                 sizes: filters.sizes.length > 0 ? filters.sizes.join(',') : undefined,
@@ -58,7 +60,7 @@ const Shop = () => {
                 setError(null);
             }
         } catch (err) {
-            setError(err?.response?.data?.message || 'Failed to fetch products');
+            setError(err?.response?.data?.message || 'No Products Found');
             console.error('Fetch error:', err);
         } finally {
             setLoading(false);
@@ -109,6 +111,19 @@ const Shop = () => {
             fetchProducts();
         }
     }, [filters]);
+
+    useEffect(() => {
+        const typeFromUrl = searchParams.get('type');
+        const categoryFromUrl = searchParams.get('category');
+        
+        if (typeFromUrl || categoryFromUrl) {
+            setFilters(prev => ({
+                ...prev,
+                type: typeFromUrl || prev.type,
+                category: categoryFromUrl || prev.category
+            }));
+        }
+    }, [searchParams]);
 
     const handleFilterChange = (key, value) => {
         setFilters(prev => ({
