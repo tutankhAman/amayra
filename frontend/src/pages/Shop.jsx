@@ -10,7 +10,7 @@ const Shop = () => {
     const [error, setError] = useState(null);
     const [filters, setFilters] = useState({
         category: '',
-        type: '', // Add type filter
+        type: '',
         minPrice: '',
         maxPrice: '',
         sizes: [],

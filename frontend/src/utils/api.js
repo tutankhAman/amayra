@@ -98,12 +98,7 @@ export const cartService = {
     quantity: data.quantity,
     size: data.size
   }),
-  remove: (params) => del(`/cart/delete`, {
-    params: {
-      productId: params.productId,
-      size: params.size
-    }
-  }),
+  remove: ({ productId, size }) => del(`/cart/delete?productId=${productId}&size=${size}`),
   clear: () => del('/cart/clear')
 };
 

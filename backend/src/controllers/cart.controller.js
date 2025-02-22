@@ -128,10 +128,9 @@ const updateCartItem = asyncHandler(async (req, res) => {
 });
 
 const removeFromCart = asyncHandler(async (req, res) => {
-    //requesting stuff from body
-    const { productId, size } = req.body;
+    const { productId, size } = req.query;
     
-    const cart = await Cart.findOne({ user: req.user._id });
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
         throw new apiError(404, "Cart not found");
     }
@@ -141,6 +140,13 @@ const removeFromCart = asyncHandler(async (req, res) => {
     );
     
     await cart.save();
+
+    // Populate cart before sending response
+    cart = await Cart.findOne({ user: req.user._id })
+        .populate({
+            path: 'items.product',
+            select: 'name productId price discount type category sizes images stock'
+        });
 
     return res.status(200).json(
         new apiResponse(200, cart, "Item removed from cart successfully")
