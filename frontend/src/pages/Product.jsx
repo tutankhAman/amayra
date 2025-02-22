@@ -398,21 +398,12 @@ const Product = () => {
 
         setAddingToCart(true);
         try {
-            const cartData = {
-                productId: product._id,
-                quantity: quantity,
-                size: selectedSize.toUpperCase() // Ensure size is uppercase
-            };
-            
-            console.log('Sending cart data:', cartData); // Debug log
-            await addToCart(cartData);
-            
+            await addToCart(product._id, quantity, selectedSize);
             setQuantity(1);
             setSelectedSize('');
-            toast.success('Added to cart successfully');
         } catch (error) {
-            console.error('Product page cart error:', error);
-            toast.error(error?.response?.data?.message || 'Failed to add to cart');
+            console.error('Add to cart error:', error);
+            // Error handling is already managed by CartContext
         } finally {
             setAddingToCart(false);
         }
@@ -526,7 +517,7 @@ const Product = () => {
                                     hover:bg-primary/90 active:scale-95 transition-all duration-300
                                     disabled:bg-gray-400 disabled:cursor-not-allowed"
                             >
-                                {addingToCart ? (
+                                {(addingToCart || cartLoading) ? (
                                     <div className="flex items-center justify-center gap-2">
                                         <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin" />
                                         Adding...

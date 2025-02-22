@@ -88,9 +88,23 @@ export const productService = {
 // Shopping cart management
 export const cartService = {
   get: () => get('/cart'),
-  add: (data) => post('/cart/add', data),
-  update: (data) => put('/cart/update', data),
-  remove: (data) => del('/cart/delete', data)
+  add: (data) => post('/cart/add', {
+    productId: data.productId,
+    quantity: data.quantity,
+    size: data.size
+  }),
+  update: (data) => put('/cart/update', {
+    productId: data.productId,
+    quantity: data.quantity,
+    size: data.size
+  }),
+  remove: (params) => del(`/cart/delete`, {
+    params: {
+      productId: params.productId,
+      size: params.size
+    }
+  }),
+  clear: () => del('/cart/clear')
 };
 
 // Product reviews
