@@ -70,11 +70,22 @@ export const CartProvider = ({ children }) => {
     const updateCartItem = async (productId, quantity, size) => {
         try {
             setLoading(true);
-            const response = await cartService.update({ productId, quantity, size });
-            setCart(response.data.data);
+            const response = await cartService.update({ 
+                productId, 
+                quantity, 
+                size 
+            });
+            
+            // Ensure we get populated product data
+            const updatedCart = response.data.data;
+            setCart(updatedCart);
+            
             toast.success('Cart updated');
         } catch (error) {
             handleError(error);
+            // Refresh cart to ensure consistent state
+            const cartResponse = await cartService.get();
+            setCart(cartResponse.data.data);
         } finally {
             setLoading(false);
         }

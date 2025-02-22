@@ -82,16 +82,13 @@ const getCart = asyncHandler(async (req, res) => {
 });
 
 const updateCartItem = asyncHandler(async (req, res) => {
-    //getting stuff from body
     const { productId, quantity, size } = req.body;
     
-    //finding cart
-    const cart = await Cart.findOne({ user: req.user._id });
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
         throw new apiError(404, "Cart not found");
     }
 
-    //finding item in cart
     const itemIndex = cart.items.findIndex(
         item => item.product.toString() === productId && item.size === size
     );
@@ -100,11 +97,14 @@ const updateCartItem = asyncHandler(async (req, res) => {
         throw new apiError(404, "Item not found in cart");
     }
 
-    //updating quantity and subtotal
     if (quantity <= 0) {
         cart.items.splice(itemIndex, 1);
     } else {
         const product = await Product.findById(productId);
+        if (!product) {
+            throw new apiError(404, "Product not found");
+        }
+        
         if (product.stock < quantity) {
             throw new apiError(400, "Insufficient stock");
         }
@@ -114,6 +114,13 @@ const updateCartItem = asyncHandler(async (req, res) => {
     }
 
     await cart.save();
+    
+    // Populate the cart before sending response
+    cart = await Cart.findOne({ user: req.user._id })
+        .populate({
+            path: 'items.product',
+            select: 'name productId price discount type category sizes images stock'
+        });
 
     return res.status(200).json(
         new apiResponse(200, cart, "Cart updated successfully")
