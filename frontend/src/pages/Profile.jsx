@@ -4,6 +4,7 @@ import { userService } from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import profileCover from '../assets/images/profile-cover2.jpg';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -234,7 +235,7 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Profile Card */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
+            <div className="p-6 bg-white rounded-2xl shadow-sm p-6">
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <img
@@ -306,14 +307,26 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Right Column - Details/Edit Form */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl shadow-sm p-6">
+          {/* Right Column - Cover Image and Details */}
+          <div className="lg:col-span-2 flex flex-col gap-4">
+            {/* Profile Cover Image Card */}
+            <div className="bg-white rounded-2xl  shadow-sm overflow-hidden">
+              <div className="w-full h-48">
+                <img
+                  src={profileCover}
+                  alt="Profile Cover"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Details/Edit Form Card */}
+            <div className="bg-white rounded-2xl  p-6 shadow-sm flex-grow">
               {!isEditing ? (
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact Information</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 rounded-lg">
                       <div className="p-4 bg-gray-50 rounded-lg">
                         <p className="text-sm text-gray-500">Phone</p>
                         <p className="mt-1 font-medium text-gray-900">{user.phone}</p>
