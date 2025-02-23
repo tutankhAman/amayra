@@ -93,21 +93,56 @@ const Orders = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="text-center py-12 bg-white rounded-lg shadow-sm"
+            className="text-center py-16 px-4 bg-white rounded-xl shadow-sm border border-gray-100"
           >
-            <img
-              src="/empty-orders.svg"
-              alt="No orders"
-              className="w-48 h-48 mx-auto mb-4"
-            />
-            <h2 className="text-2xl text-gray-600">No orders found</h2>
-            <p className="text-gray-500 mt-2 mb-6">Start shopping to create your first order!</p>
-            <Link
-              to="/shop"
-              className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            <motion.div
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="w-64 h-64 mx-auto mb-8"
             >
-              Browse Products
-            </Link>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="w-full h-full text-tertiary opacity-90"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z"
+                  fill="none"
+                />
+                <circle cx="12" cy="6" r="1" fill="currentColor" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 14h6m-3-3v6"
+                  className="text-primary"
+                />
+              </svg>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h2 className="text-3xl font-bold text-gray-800 mb-3">Your order history is empty</h2>
+              <p className="text-gray-600 text-lg max-w-md mx-auto mb-8">
+                Looks like you haven't made any orders yet. Start shopping to discover our amazing products!
+              </p>
+              <Link
+                to="/shop"
+                className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-lg font-medium rounded-lg hover:from-primary hover:to-tertiary transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              >
+                <span className="mr-2">Explore Products</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </Link>
+            </motion.div>
           </motion.div>
         ) : (
           <div className="grid gap-6">

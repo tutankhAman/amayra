@@ -6,7 +6,6 @@ import { useCart } from '../context/CartContext';
 import SignUp from '../components/buttons/SignUp';
 
 const Navbar = () => {
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useUser();
@@ -23,6 +22,17 @@ const Navbar = () => {
   const handleTypeNavigation = (type) => {
     navigate(`/shop?type=${type}`);
     setIsMenuOpen(false);
+  };
+
+  const handleSearchClick = () => {
+    navigate('/shop');
+    setIsMenuOpen(false);
+    setTimeout(() => {
+      const searchInput = document.getElementById('shop-search');
+      if (searchInput) {
+        searchInput.focus();
+      }
+    }, 100);
   };
 
   // Profile Dropdown Component
@@ -128,14 +138,13 @@ const Navbar = () => {
           <div className="flex items-center space-x-6">
             {/* Search Bar - Desktop */}
             <div className="relative hidden md:block">
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-[300px] h-10 pl-4 pr-10 py-1 bg-gray-300 text-gray-900 placeholder-gray-900 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-tertiary focus:border-transparent"
-              />
-              <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-800" />
+              <button
+                onClick={handleSearchClick}
+                className="w-[300px] h-10 pl-4 pr-10 py-1 bg-gray-300 text-gray-900 placeholder-gray-900 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-tertiary focus:border-transparent text-left"
+              >
+                Search...
+              </button>
+              <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-800 pointer-events-none" />
             </div>
 
             {/* Mobile Shop Link */}
@@ -146,7 +155,7 @@ const Navbar = () => {
             {/* Mobile Search Icon */}
             <button 
               className="md:hidden text-gray-700 hover:text-primary transition-colors duration-300"
-              onClick={() => setIsMenuOpen(true)}
+              onClick={handleSearchClick}
             >
               <FaSearch className="h-6 w-6" />
             </button>
@@ -182,16 +191,15 @@ const Navbar = () => {
       <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
         {/* Search Bar - Mobile */}
         <div className="px-4 py-2">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-4 pr-10 py-1 bg-[#9B9A9A] text-gray-800 placeholder-gray-800 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+          <button
+            onClick={handleSearchClick}
+            className="relative w-full text-left"
+          >
+            <div className="w-full h-8 pl-4 pr-10 py-1 bg-[#9B9A9A] text-gray-800 placeholder-gray-800 border border-gray-300 rounded-full">
+              Search...
+            </div>
             <FaSearch className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-800" />
-          </div>
+          </button>
         </div>
 
         {/* Mobile Navigation Links */}

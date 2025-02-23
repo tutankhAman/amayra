@@ -59,41 +59,39 @@ const Profile = () => {
     });
   };
 
-  const handleAvatarChange = (e) => {
-    setAvatar(e.target.files[0]);
-  };
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  const handleAvatarUpdate = async () => {
-    if (!avatar) {
-      console.error('No avatar file selected');
+    // Validate file type
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+    if (!validTypes.includes(file.type)) {
+      notifyError('Please select a valid image file (JPEG, PNG)');
       return;
     }
-    
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      notifyError('Image size should be less than 5MB');
+      return;
+    }
+
     try {
       const formData = new FormData();
-      formData.append('avatar', avatar, avatar.name);
-
-      console.log('Uploading file:', {
-        name: avatar.name,
-        type: avatar.type,
-        size: avatar.size
-      });
+      formData.append('avatar', file);
 
       const response = await userService.updateAvatar(formData);
       
-      if (response.data?.data) {
-        setAvatar(null);
+      if (response.data?.data?.avatar) {
         setUser(prevUser => ({
           ...prevUser,
           avatar: response.data.data.avatar
         }));
+        notifySuccess('Profile picture updated successfully!');
       }
     } catch (error) {
-      console.error('Error updating avatar:', {
-        message: error.response?.data?.message,
-        status: error.response?.status,
-        data: error.response?.data
-      });
+      console.error('Error updating avatar:', error);
+      notifyError(error.response?.data?.message || 'Failed to update profile picture');
     }
   };
 
@@ -247,8 +245,7 @@ const Profile = () => {
                     <label className="absolute bottom-0 right-0 bg-blue-500 p-2 rounded-full shadow-lg cursor-pointer hover:bg-blue-600 transition-colors">
                       <input
                         type="file"
-                        name="avatar"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/jpg"
                         onChange={handleAvatarChange}
                         className="hidden"
                       />
