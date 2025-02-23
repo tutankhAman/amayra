@@ -19,13 +19,13 @@ const createOrder = asyncHandler(async (req, res) => {
         // Validate items and calculate totals
         let subtotal = 0;
         const orderItems = cart.items.map(item => {
-            const itemTotal = item.price * item.quantity;
+            const itemTotal = item.quantity * item.product.sellingPrice; // Use sellingPrice instead of price
             subtotal += itemTotal;
             
             return {
                 product: item.product._id,
                 quantity: item.quantity,
-                price: item.price,
+                price: item.product.sellingPrice, // Use sellingPrice instead of price
                 size: item.size
             };
         });
@@ -143,33 +143,28 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
 });
 
 const cancelOrder = asyncHandler(async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const userId = req.user._id;
+    const { orderId } = req.params;
+    const userId = req.user._id;
 
-        const order = await Order.findOne({
-            _id: orderId,
-            user: userId
-        });
+    const order = await Order.findOne({
+        _id: orderId,
+        user: userId
+    });
 
-        if (!order) {
-            throw new apiError(404, "Order not found");
-        }
-
-        if (order.orderStatus === "Completed" || order.orderStatus === "Cancelled") {
-            throw new apiError(400, "Cannot cancel order in current status");
-        }
-
-        order.orderStatus = "Cancelled";
-        await order.save();
-
-        res.status(200).json(
-            new apiResponse(200, order, "Order cancelled successfully")
-        );
-
-    } catch (error) {
-        throw new apiError(500, error?.message || "Error cancelling order");
+    if (!order) {
+        throw new apiError(404, "Order not found");
     }
+
+    if (order.orderStatus !== "Pending") {
+        throw new apiError(400, "Only pending orders can be cancelled");
+    }
+
+    order.orderStatus = "Cancelled";
+    await order.save();
+
+    return res.status(200).json(
+        new apiResponse(200, order, "Order cancelled successfully")
+    );
 });
 
 export {

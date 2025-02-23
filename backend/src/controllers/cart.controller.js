@@ -36,7 +36,7 @@ const addToCart = asyncHandler(async (req, res) => {
                 product: productId,
                 quantity,
                 size,
-                price: product.price,
+                price: product.sellingPrice, // Use sellingPrice instead of price
             }]
         });
     } else {
@@ -48,13 +48,14 @@ const addToCart = asyncHandler(async (req, res) => {
         //updating quantity and subtotal if item exists
         if (existingItem) {
             existingItem.quantity += quantity;
+            existingItem.price = product.sellingPrice; // Update to sellingPrice
             existingItem.subtotal = existingItem.quantity * existingItem.price;
         } else {
             cart.items.push({
                 product: productId,
                 quantity,
                 size,
-                price: product.price,
+                price: product.sellingPrice, // Use sellingPrice
             });
         }
         await cart.save();
@@ -110,7 +111,8 @@ const updateCartItem = asyncHandler(async (req, res) => {
         }
         
         cart.items[itemIndex].quantity = quantity;
-        cart.items[itemIndex].subtotal = quantity * cart.items[itemIndex].price;
+        cart.items[itemIndex].price = product.sellingPrice; // Use sellingPrice
+        cart.items[itemIndex].subtotal = quantity * product.sellingPrice;
     }
 
     await cart.save();

@@ -23,6 +23,13 @@ const productSchema = new mongoose.Schema(
         },
         discount:{
             type: Number,
+            default: 0
+        },
+        sellingPrice: {
+            type: Number,
+            default: function() {
+                return this.price - (this.discount || 0);
+            }
         },
         type: {
             type: String,
@@ -65,4 +72,10 @@ const productSchema = new mongoose.Schema(
     }, {timestamps: true}
 );
 
-export const Product = mongoose.model("Product", productSchema)
+// Add a pre-save middleware to update sellingPrice
+productSchema.pre('save', function(next) {
+    this.sellingPrice = this.price - (this.discount || 0);
+    next();
+});
+
+export const Product = mongoose.model("Product", productSchema);

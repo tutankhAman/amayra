@@ -28,7 +28,7 @@ const OrderSuccessModal = ({ isOpen, onClose, orderId }) => {
                         <p className="text-gray-600">Your order has been confirmed</p>
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                             <p className="text-sm text-gray-500">Order ID:</p>
-                            <p className="font-mono font-medium text-primary">{orderId}</p>
+                            <p className="font-mono font-medium text-primary">#{orderId.slice(-8)}</p>
                         </div>
                     </div>
 
