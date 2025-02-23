@@ -22,7 +22,7 @@ const ProductCard = ({ product }) => {
         >
             {/* Discount Badge */}
             <div className="absolute top-3 left-3 z-10">
-                <div className="px-3 py-1 bg-green-500/90 backdrop-blur-sm text-white 
+                <div className="subheading px-3 py-1 bg-green-500/90 backdrop-blur-sm text-white 
                     rounded-lg text-sm font-medium shadow-lg">
                     ₹{product.discount} OFF!
                 </div>

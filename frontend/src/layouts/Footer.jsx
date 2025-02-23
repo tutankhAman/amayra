@@ -58,7 +58,7 @@ const Footer = () => {
                 <span>Churipatti Rd, Kishanganj, Bihar, India</span>
               </li>
             </ul>
-            <div className="mt-4" style={{ height: '200px' }}>
+            <div className="z-10 mt-4" style={{ height: '200px' }}>
               <MapContainer 
                 center={position} 
                 zoom={13} 
