@@ -7,6 +7,7 @@ import Product from '../pages/Product';
 import Login from '../pages/Login';
 import SignUp from '../pages/Signup';
 import Cart from '../pages/Cart';
+import Profile from '../pages/Profile';
 
 const AppRoutes = () => {
     return (
@@ -16,6 +17,7 @@ const AppRoutes = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile/>} />
             <Route path="/product/:id" element={<Product />} />
             <Route path="*" element={<NotFound />} />
         </Routes>

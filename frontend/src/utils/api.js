@@ -43,10 +43,11 @@ const apiMethods = {
   get: (url, params) => api.get(url, { params }),
   post: (url, data) => api.post(url, data),
   put: (url, data) => api.put(url, data),
+  patch: (url, data) => api.patch(url, data),
   del: (url) => api.delete(url)
 };
 
-const { get, post, put, del } = apiMethods;
+const { get, post, put, patch, del } = apiMethods;
 
 // User authentication and profile management
 export const userService = {
@@ -67,9 +68,20 @@ export const userService = {
   logout: () => post('/users/logout'),
   refreshToken: () => post('/users/refresh-token'),
   getCurrentUser: () => get('/users/current-user'),
-  changePassword: (data) => put('/users/change-password', data),
-  updateAccount: (data) => put('/users/update-account', data),
-  updateAvatar: (formData) => put('/users/avatar', formData),
+  changePassword: (data) => {
+    return api.patch('/users/change-password', {
+      oldPassword: data.oldPassword,
+      newPassword: data.newPassword
+    });
+  },
+  updateAccount: (data) => patch('/users/update-account', data),
+  updateAvatar: (formData) => {
+    return api.patch('/users/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
   getWishlist: () => get('/users/wishlist'),
   addToWishlist: (data) => post('/users/wishlist', data),
   removeFromWishlist: (data) => del('/users/wishlist', data)

@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js"
 import { User } from "../models/user.models.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
+import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js"
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken"
 
@@ -281,33 +282,53 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     .json(new apiResponse(200, user, "Account details updated successfully"))
 })
 
-const updateUserAvatar = asyncHandler(async (req,res) => {
-    const avatarLocalPath = req.file?.avatarLocalPath
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    // Debug logging
+    console.log("Files received:", req.files);
+    console.log("Single file:", req.file);
 
-    if (!avatarLocalPath) {
-        throw new apiError(400, "Avatar file is missing")
+    if (!req.file) {
+        throw new apiError(400, "No avatar file uploaded");
     }
 
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
+    const avatarLocalPath = req.file.path;
+    console.log("Local file path:", avatarLocalPath);
 
-    if (!avatar.url) {
-        throw new apiError(400, "error while uploading file")
+    // Get current user and their avatar
+    const user = await User.findById(req.user?._id);
+    
+    // // Delete old avatar from cloudinary if exists
+    // if (user?.avatar) {
+    //     // Extract public_id from the URL
+    //     const publicId = user.avatar.split('/').pop().split('.')[0];
+    //     if (publicId) {
+    //         console.log("Attempting to delete old avatar with public ID:", publicId);
+    //         await deleteFromCloudinary(publicId);
+    //     }
+    // }
+
+    // Upload new avatar
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!avatar || !avatar.url) {
+        throw new apiError(400, "Error while uploading avatar");
     }
 
-    const user = await User.findByIdAndUpdate(
+    // Update user with new avatar URL
+    const updatedUser = await User.findByIdAndUpdate(
         req.user?._id,
         {
-            $set:{
+            $set: {
                 avatar: avatar.url
             }
         },
-        {new:true}
-    ).select("-password")
+        { new: true }
+    ).select("-password");
 
     return res
-    .status(200)
-    .json(new apiResponse(200, user, "Avatar updated successfully"))
-})
+        .status(200)
+        .json(new apiResponse(200, updatedUser, "Avatar updated successfully"));
+});
 
 //wishlist
 const addToWishlist = asyncHandler(async (req, res) => {
