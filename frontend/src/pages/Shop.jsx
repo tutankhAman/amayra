@@ -156,7 +156,8 @@ const Shop = () => {
 
     // Modify FiltersContent to work in bottom sheet
     const FiltersContent = () => (
-        <div className="h-[80vh] overflow-y-auto">
+        <div className="h-[80vh] flex flex-col">
+            {/* Fixed Header */}
             <div className="sticky top-0 bg-white px-4 py-3 border-b flex justify-between items-center z-10
                 shadow-sm backdrop-blur-md">
                 <h2 className="text-lg font-semibold">Filters</h2>
@@ -168,113 +169,116 @@ const Shop = () => {
                 </button>
             </div>
             
-            <div className="p-4 space-y-6 pb-24">
-                {/* Type Filter */}
-                <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
-                    <h3 className="text-base font-medium text-gray-800 mb-2">Type</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {types.map(type => (
-                            <button
-                                key={type}
-                                onClick={() => handleFilterChange('type', type === filters.type ? '' : type)}
-                                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
-                                    ${filters.type === type 
-                                        ? 'bg-primary text-white shadow-sm' 
-                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                    }`}
-                            >
-                                {type}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Category Filter */}
-                <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
-                    <h3 className="text-base font-medium text-gray-800 mb-2">Categories</h3>
-                    <div className="space-y-2">
-                        {categories.map(category => (
-                            <button
-                                key={category}
-                                onClick={() => handleFilterChange('category', category === filters.category ? '' : category)}
-                                className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200
-                                    ${filters.category === category 
-                                        ? 'bg-primary text-white' 
-                                        : 'text-gray-600 hover:bg-gray-50'
-                                    }`}
-                            >
-                                {category}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Price Range */}
-                <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
-                    <h3 className="text-base font-medium text-gray-800 mb-2">Price Range</h3>
-                    <div className="flex gap-2">
-                        <div className="flex-1">
-                            <input
-                                type="number"
-                                placeholder="Min"
-                                className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                                value={filters.minPrice}
-                                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                            />
-                        </div>
-                        <div className="flex items-center text-gray-400">-</div>
-                        <div className="flex-1">
-                            <input
-                                type="number"
-                                placeholder="Max"
-                                className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                                value={filters.maxPrice}
-                                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                            />
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+                <div className="p-4 space-y-6 pb-24">
+                    {/* Type Filter */}
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
+                        <h3 className="text-base font-medium text-gray-800 mb-2">Type</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {types.map(type => (
+                                <button
+                                    key={type}
+                                    onClick={() => handleFilterChange('type', type === filters.type ? '' : type)}
+                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
+                                        ${filters.type === type 
+                                            ? 'bg-primary text-white shadow-sm' 
+                                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                >
+                                    {type}
+                                </button>
+                            ))}
                         </div>
                     </div>
-                </div>
 
-                {/* Size Filter */}
-                <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
-                    <h3 className="text-base font-medium text-gray-800 mb-2">Sizes</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {availableSizes.map(size => (
-                            <button
-                                key={size}
-                                className={`w-12 h-12 rounded-lg font-medium text-sm transition-all duration-200
-                                    ${filters.sizes.includes(size)
-                                        ? 'bg-primary text-white shadow-sm'
-                                        : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
-                                    }`}
-                                onClick={() => handleSizeToggle(size)}
-                            >
-                                {size}
-                            </button>
-                        ))}
+                    {/* Category Filter */}
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
+                        <h3 className="text-base font-medium text-gray-800 mb-2">Categories</h3>
+                        <div className="space-y-2">
+                            {categories.map(category => (
+                                <button
+                                    key={category}
+                                    onClick={() => handleFilterChange('category', category === filters.category ? '' : category)}
+                                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200
+                                        ${filters.category === category 
+                                            ? 'bg-primary text-white' 
+                                            : 'text-gray-600 hover:bg-gray-50'
+                                        }`}
+                                >
+                                    {category}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                </div>
 
-                {/* Sort Options */}
-                <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
-                    <h3 className="text-base font-medium text-gray-800 mb-2">Sort By</h3>
-                    <select
-                        className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-gray-50
-                            focus:ring-1 focus:ring-primary/30 focus:border-primary"
-                        value={filters.sortBy}
-                        onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                    >
-                        {sortOptions.map(option => (
-                            <option key={option.value} value={option.value}>
-                                {option.label}
-                            </option>
-                        ))}
-                    </select>
+                    {/* Price Range */}
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
+                        <h3 className="text-base font-medium text-gray-800 mb-2">Price Range</h3>
+                        <div className="flex gap-2">
+                            <div className="flex-1">
+                                <input
+                                    type="number"
+                                    placeholder="Min"
+                                    className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary/30 focus:border-primary"
+                                    value={filters.minPrice}
+                                    onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-center text-gray-400">-</div>
+                            <div className="flex-1">
+                                <input
+                                    type="number"
+                                    placeholder="Max"
+                                    className="w-full p-2 text-sm border border-gray-200 rounded-lg focus:ring-1 focus:ring-primary/30 focus:border-primary"
+                                    value={filters.maxPrice}
+                                    onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Size Filter */}
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
+                        <h3 className="text-base font-medium text-gray-800 mb-2">Sizes</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {availableSizes.map(size => (
+                                <button
+                                    key={size}
+                                    className={`w-12 h-12 rounded-lg font-medium text-sm transition-all duration-200
+                                        ${filters.sizes.includes(size)
+                                            ? 'bg-primary text-white shadow-sm'
+                                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                        }`}
+                                    onClick={() => handleSizeToggle(size)}
+                                >
+                                    {size}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Sort Options */}
+                    <div className="bg-white/70 backdrop-blur-sm p-4 rounded-lg border border-gray-100">
+                        <h3 className="text-base font-medium text-gray-800 mb-2">Sort By</h3>
+                        <select
+                            className="w-full p-2 text-sm border border-gray-200 rounded-lg bg-gray-50
+                                focus:ring-1 focus:ring-primary/30 focus:border-primary"
+                            value={filters.sortBy}
+                            onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                        >
+                            {sortOptions.map(option => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
             </div>
 
-            {/*Filters Button*/}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t shadow-lg">
+            {/* Fixed Footer */}
+            <div className="sticky bottom-0 bg-white border-t shadow-lg p-4">
                 <button
                     onClick={() => setIsFilterOpen(false)}
                     className="w-full py-3 bg-primary text-white rounded-lg font-medium
@@ -283,6 +287,148 @@ const Shop = () => {
                     <FiCheck size={20} />
                     Apply Filters
                 </button>
+            </div>
+        </div>
+    );
+
+    // Add new component for desktop filters
+    const DesktopFilters = () => (
+        <div className="hidden md:block w-72 flex-shrink-0">
+            <div className="sticky top-24 bg-white rounded-xl shadow-sm overflow-hidden max-h-[calc(100vh-120px)] flex flex-col">
+                {/* Fixed Header */}
+                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-primary/5 to-transparent">
+                    <h2 className="text-xl font-semibold text-gray-900">Filters</h2>
+                    <p className="text-sm text-gray-500 mt-1">Refine your search</p>
+                </div>
+
+                {/* Scrollable Content */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent hover:scrollbar-thumb-gray-300">
+                    <div className="p-6 space-y-8">
+                        {/* Type Filter */}
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-900 mb-4">Type</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {types.map(type => (
+                                    <button
+                                        key={type}
+                                        onClick={() => handleFilterChange('type', type === filters.type ? '' : type)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 
+                                            ${filters.type === type 
+                                                ? 'bg-primary text-white shadow-sm ring-2 ring-primary/20' 
+                                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                    >
+                                        {type}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Category Filter */}
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-900 mb-4">Categories</h3>
+                            <div className="space-y-2">
+                                {categories.map(category => (
+                                    <button
+                                        key={category}
+                                        onClick={() => handleFilterChange('category', category === filters.category ? '' : category)}
+                                        className={`w-full text-left px-4 py-2.5 rounded-lg text-sm transition-all duration-200
+                                            ${filters.category === category 
+                                                ? 'bg-primary text-white font-medium' 
+                                                : 'text-gray-600 hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        {category}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Price Range */}
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-900 mb-4">Price Range</h3>
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1">
+                                    <input
+                                        type="number"
+                                        placeholder="Min"
+                                        className="w-full p-2.5 text-sm border border-gray-200 rounded-lg 
+                                            focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                        value={filters.minPrice}
+                                        onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                                    />
+                                </div>
+                                <span className="text-gray-400">to</span>
+                                <div className="flex-1">
+                                    <input
+                                        type="number"
+                                        placeholder="Max"
+                                        className="w-full p-2.5 text-sm border border-gray-200 rounded-lg 
+                                            focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                        value={filters.maxPrice}
+                                        onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Size Filter */}
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-900 mb-4">Sizes</h3>
+                            <div className="flex flex-wrap gap-2">
+                                {availableSizes.map(size => (
+                                    <button
+                                        key={size}
+                                        className={`w-12 h-12 rounded-xl font-medium text-sm transition-all duration-200
+                                            ${filters.sizes.includes(size)
+                                                ? 'bg-primary text-white shadow-sm ring-2 ring-primary/20' 
+                                                : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                                            }`}
+                                        onClick={() => handleSizeToggle(size)}
+                                    >
+                                        {size}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Sort Options */}
+                        <div>
+                            <h3 className="text-sm font-medium text-gray-900 mb-4">Sort By</h3>
+                            <select
+                                className="w-full p-2.5 text-sm border border-gray-200 rounded-lg bg-gray-50
+                                    focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+                                value={filters.sortBy}
+                                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
+                            >
+                                {sortOptions.map(option => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Fixed Footer */}
+                <div className="px-6 py-4 border-t border-gray-100 bg-gray-50">
+                    <button
+                        onClick={() => setFilters({
+                            category: '',
+                            type: '',
+                            minPrice: '',
+                            maxPrice: '',
+                            sizes: [],
+                            sortBy: 'newest',
+                            page: 1,
+                            limit: 12
+                        })}
+                        className="w-full py-2 text-sm text-gray-600 hover:text-primary transition-colors duration-200"
+                    >
+                        Reset Filters
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -331,14 +477,8 @@ const Shop = () => {
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-4 py-8">
                 <div className="flex gap-8">
-                    {/* Desktop Filters Sidebar */}
-                    <div className="hidden md:block w-72 flex-shrink-0 space-y-6">
-                        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm sticky top-24">
-                            <h2 className="text-xl font-semibold text-gray-900 mb-6">Filters</h2>
-                            <FiltersContent />
-                        </div>
-                    </div>
-
+                    <DesktopFilters />
+                    
                     {/* Product Grid Container */}
                     <div className="flex-1">
                         {error && (
