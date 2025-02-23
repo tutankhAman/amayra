@@ -8,6 +8,7 @@ import Login from '../pages/Login';
 import SignUp from '../pages/Signup';
 import Cart from '../pages/Cart';
 import Profile from '../pages/Profile';
+import Wishlist from '../pages/Wishlist';
 
 const AppRoutes = () => {
     return (
@@ -18,6 +19,7 @@ const AppRoutes = () => {
             <Route path="/signup" element={<SignUp />} />
             <Route path="/cart" element={<Cart />} />
             <Route path="/profile" element={<Profile/>} />
+            <Route path='/wishlist' element={<Wishlist />} />
             <Route path="/product/:id" element={<Product />} />
             <Route path="*" element={<NotFound />} />
         </Routes>

@@ -5,6 +5,7 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { deleteFromCloudinary } from "../utils/deleteFromCloudinary.js"
 import { apiResponse } from "../utils/apiResponse.js";
 import jwt from "jsonwebtoken"
+import mongoose from "mongoose";
 
 //internal method to generate refresh and access tokens
 const generateAccessAndRefreshTokens = async (userId)=>{
@@ -237,7 +238,6 @@ const changeCurrentPassword = asyncHandler(async(req, res)=>{
 
 })
 
-//fetching current user using auth middleware
 const getCurrentUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id).select("-password -refreshToken");
     if (!user) {
@@ -371,7 +371,7 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
     }
 
     //fetching product
-    const productId = req.body.productId
+    const productId = req.params.productId
 
     if(!mongoose.Types.ObjectId.isValid(productId)) {
         throw new apiError(400, "Product id is invalid")
@@ -400,7 +400,7 @@ const getWishlist = asyncHandler(async (req, res) => {
     }
 
     //populating so wishlist shows the attributes of product
-    await user.populate("wishlist", "name price images")
+    await user.populate("wishlist", "name price images discount")
 
     //returning wishlist
     res.status(200).json(new apiResponse(200, user.wishlist, "Wishlist fetched succesfully"))

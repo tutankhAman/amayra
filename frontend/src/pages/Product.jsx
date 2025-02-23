@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { productService, reviewService } from '../utils/api';
+import { productService, reviewService, userService } from '../utils/api';
 import { FiMinus, FiPlus, FiHeart, FiShare2, FiStar, FiEdit2, FiTrash2, FiMessageCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ProductCard from '../components/cards/productCard';
@@ -345,6 +345,8 @@ const Product = () => {
     const [reviews, setReviews] = useState([]);
     const { addToCart, loading: cartLoading } = useCart();
     const [addingToCart, setAddingToCart] = useState(false);
+    const [isInWishlist, setIsInWishlist] = useState(false);
+    const [wishlistLoading, setWishlistLoading] = useState(false);
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -380,6 +382,21 @@ const Product = () => {
         }
     }, [id]);
 
+    useEffect(() => {
+        const checkWishlistStatus = async () => {
+            try {
+                const response = await userService.getWishlist();
+                setIsInWishlist(response.data.data.some(item => item._id === id));
+            } catch (error) {
+                console.error('Error checking wishlist status:', error);
+            }
+        };
+
+        if (id) {
+            checkWishlistStatus();
+        }
+    }, [id]);
+
     const handleAddToCart = async () => {
         if (!selectedSize) {
             toast.error('Please select a size');
@@ -406,6 +423,27 @@ const Product = () => {
             // Error handling is already managed by CartContext
         } finally {
             setAddingToCart(false);
+        }
+    };
+
+    const handleWishlist = async () => {
+        if (!product?._id) return;
+
+        setWishlistLoading(true);
+        try {
+            if (isInWishlist) {
+                await userService.removeFromWishlist(product._id);
+                toast.success('Removed from wishlist');
+                setIsInWishlist(false);
+            } else {
+                await userService.addToWishlist(product._id);
+                toast.success('Added to wishlist');
+                setIsInWishlist(true);
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Failed to update wishlist');
+        } finally {
+            setWishlistLoading(false);
         }
     };
 
@@ -526,8 +564,20 @@ const Product = () => {
                                     'Add to Cart'
                                 )}
                             </button>
-                            <button className="p-4 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
-                                <FiHeart className="text-xl" />
+                            <button 
+                                onClick={handleWishlist}
+                                disabled={wishlistLoading}
+                                className={`p-4 rounded-md transition-colors ${
+                                    isInWishlist 
+                                        ? 'bg-primary/10 text-primary hover:bg-primary/20' 
+                                        : 'bg-gray-100 hover:bg-gray-200'
+                                }`}
+                            >
+                                <FiHeart 
+                                    className={`text-xl ${
+                                        isInWishlist ? 'fill-primary' : ''
+                                    }`}
+                                />
                             </button>
                             <button className="p-4 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
                                 <FiShare2 className="text-xl" />

@@ -83,8 +83,8 @@ export const userService = {
     });
   },
   getWishlist: () => get('/users/wishlist'),
-  addToWishlist: (data) => post('/users/wishlist', data),
-  removeFromWishlist: (data) => del('/users/wishlist', data)
+  addToWishlist: (productId) => post('/users/wishlist', { productId }),
+  removeFromWishlist: (productId) => del(`/users/wishlist/${productId}`)
 };
 
 // Product CRUD operations

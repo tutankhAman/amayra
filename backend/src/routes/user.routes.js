@@ -46,5 +46,6 @@ router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateUserAvat
 router.route("/wishlist").get(verifyJWT, getWishlist)
 router.route("/wishlist").post(verifyJWT, addToWishlist)
 router.route("/wishlist").delete(verifyJWT, removeFromWishlist)
+router.route("/wishlist/:productId").delete(verifyJWT, removeFromWishlist)
 
 export default router
