@@ -6,60 +6,66 @@ import { Cart } from "../models/cart.models.js";
 
 const createOrder = asyncHandler(async (req, res) => {
     try {
-        //fetching user id
         const userId = req.user._id;
 
-        //fetching the cart for that user
-        const cart = await Cart.findOne({ user: userId }).populate("products.product");
-        
-        if (!cart?.products?.length) {
+        // Get cart and populate product details
+        const cart = await Cart.findOne({ user: userId })
+            .populate('items.product');
+
+        if (!cart?.items?.length) {
             throw new apiError(400, "Cart is empty");
         }
 
-        //total price calculation
-        const subtotal = cart.totalPrice;
-        const tax = subtotal * 0.18;
-        const totalPrice = subtotal + tax;
-
-        //creating the order in database
-        const order = await Order.create({
-            user: userId,
-            products: cart.products.map(item => ({
+        // Validate items and calculate totals
+        let subtotal = 0;
+        const orderItems = cart.items.map(item => {
+            const itemTotal = item.price * item.quantity;
+            subtotal += itemTotal;
+            
+            return {
                 product: item.product._id,
                 quantity: item.quantity,
-                price: item.price
-            })),
-            subtotal,
-            tax,
-            totalPrice,
-            paymentMethod: "Cash",
-            orderStatus: "Pending"
+                price: item.price,
+                size: item.size
+            };
         });
-        
-        //reset the cart after order
+
+        // Create order
+        const order = await Order.create({
+            user: userId,
+            items: orderItems,
+            subtotal,
+            totalPrice: subtotal // Add any additional charges here if needed
+        });
+
+        // Clear the cart
         await Cart.findOneAndUpdate(
             { user: userId },
-            { $set: { products: [], totalPrice: 0 } }
+            { $set: { items: [], totalPrice: 0 } }
         );
 
-        res.status(201).json(
-            new apiResponse(201, order, "Order created successfully")
+        // Get the populated order for response
+        const populatedOrder = await Order.findById(order._id)
+            .populate('items.product', 'name images price')
+            .lean();
+
+        return res.status(201).json(
+            new apiResponse(201, populatedOrder, "Order created successfully")
         );
 
     } catch (error) {
+        console.error("Order creation error:", error);
         throw new apiError(500, error?.message || "Error creating order");
     }
 });
 
 const getUserOrders = asyncHandler(async (req, res) => {
     try {
-        //get user id
         const userId = req.user._id;
         
-        //find order of that user
         const orders = await Order.find({ user: userId })
             .populate({
-                path: "products.product",
+                path: "items.product",
                 select: "name productId images price"
             })
             .sort("-createdAt");
@@ -75,16 +81,14 @@ const getUserOrders = asyncHandler(async (req, res) => {
 
 const getOrderById = asyncHandler(async (req, res) => {
     try {
-        //fetch userid and orderid
         const { orderId } = req.params;
         const userId = req.user._id;
 
-        //find order based on that id
         const order = await Order.findOne({
             _id: orderId,
             user: userId
         }).populate({
-            path: "products.product",
+            path: "items.product",
             select: "name productId images price"
         });
 
@@ -138,9 +142,40 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     }
 });
 
+const cancelOrder = asyncHandler(async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const userId = req.user._id;
+
+        const order = await Order.findOne({
+            _id: orderId,
+            user: userId
+        });
+
+        if (!order) {
+            throw new apiError(404, "Order not found");
+        }
+
+        if (order.orderStatus === "Completed" || order.orderStatus === "Cancelled") {
+            throw new apiError(400, "Cannot cancel order in current status");
+        }
+
+        order.orderStatus = "Cancelled";
+        await order.save();
+
+        res.status(200).json(
+            new apiResponse(200, order, "Order cancelled successfully")
+        );
+
+    } catch (error) {
+        throw new apiError(500, error?.message || "Error cancelling order");
+    }
+});
+
 export {
     createOrder,
     getUserOrders,
     getOrderById,
-    updateOrderStatus
+    updateOrderStatus,
+    cancelOrder
 };

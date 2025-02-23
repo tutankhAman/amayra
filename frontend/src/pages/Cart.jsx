@@ -1,8 +1,10 @@
-import React, { useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { FiMinus, FiPlus, FiTrash2, FiShoppingBag, FiMapPin, FiPackage } from 'react-icons/fi';
 import { motion, AnimatePresence } from 'framer-motion';
+import OrderSuccessModal from '../components/OrderSuccessModal';
+import { orderService } from '../utils/api';
 
 const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
     if (!item?.product) return null;
@@ -103,7 +105,7 @@ const CartItem = ({ item, onUpdateQuantity, onRemove }) => {
     );
 };
 
-const OrderSummary = ({ subtotal, itemCount }) => {
+const OrderSummary = ({ subtotal, itemCount, handleCreateOrder, isProcessing }) => {
     const storeAddress = "Amayra Ethnic Collections, Near Ramzan Pull, infront of Haider Nursing Home, Churipatti Road, Kishanganj, Bihar - 855108";
 
     return (
@@ -141,14 +143,21 @@ const OrderSummary = ({ subtotal, itemCount }) => {
                 </div>
 
                 <div className="pt-6">
-                    <Link
-                        to="/checkout"
+                    <button
+                        onClick={handleCreateOrder}
+                        disabled={isProcessing}
                         className="w-full flex items-center justify-center gap-2 bg-primary text-white py-4 px-6 rounded-lg
-                    font-medium hover:bg-primary/90 active:scale-95 transition-all duration-300 shadow-sm"
+                        font-medium hover:bg-primary/90 active:scale-95 transition-all duration-300 shadow-sm disabled:opacity-70"
                     >
-                        <FiShoppingBag className="text-xl" />
-                        Continue to Store Pickup
-                    </Link>
+                        {isProcessing ? (
+                            "Processing..."
+                        ) : (
+                            <>
+                                <FiShoppingBag className="text-xl" />
+                                Continue to Store Pickup
+                            </>
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
@@ -180,10 +189,41 @@ const EmptyCart = () => {
 
 const Cart = () => {
     const { cart, loading, updateCartItem, removeFromCart, clearCart, getCartTotals } = useCart();
+    const [showSuccessModal, setShowSuccessModal] = useState(false);
+    const [orderId, setOrderId] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
+
+    const handleCreateOrder = async () => {
+        try {
+            setIsProcessing(true);
+            const { data: { data: order, message } } = await orderService.create();
+            
+            if (!order?._id) {
+                throw new Error('Invalid order response');
+            }
+
+            setOrderId(order._id);
+            setShowSuccessModal(true);
+        } catch (error) {
+            console.error('Error creating order:', error);
+            alert(
+                error.response?.data?.message || 
+                'Failed to create order. Please try again.'
+            );
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleCloseModal = () => {
+        setShowSuccessModal(false);
+        navigate('/orders'); // Optionally redirect to orders page
+    };
 
     if (loading) {
         return (
@@ -205,44 +245,51 @@ const Cart = () => {
     const itemCount = cart?.items?.length || 0;
 
     return (
-        <div className="min-h-screen bg-gray-50 py-12">
-            <div className="max-w-7xl mx-auto px-4">
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-4xl mt-4 font-bold text-gray-900">Shopping Cart</h1>
-                        <p className="subheading text-gray-500 mt-1">({itemCount} items)</p>
-                    </div>
-                    {/* <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={clearCart}
-                        className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-2
-                            px-4 py-2 rounded-lg hover:bg-red-50 transition-all"
-                    >
-                        <FiTrash2 /> Clear Cart
-                    </motion.button> */}
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-6">
-                        <AnimatePresence>
-                            {cart?.items?.filter(item => item?.product)?.map((item) => (
-                                <CartItem
-                                    key={`${item.product._id}-${item.size}`}
-                                    item={item}
-                                    onUpdateQuantity={updateCartItem}
-                                    onRemove={removeFromCart}
-                                />
-                            ))}
-                        </AnimatePresence>
+        <>
+            <div className="min-h-screen bg-gray-50 py-12">
+                <div className="max-w-7xl mx-auto px-4">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h1 className="text-4xl mt-4 font-bold text-gray-900">Shopping Cart</h1>
+                            <p className="subheading text-gray-500 mt-1">({itemCount} items)</p>
+                        </div>
+                        {/* <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={clearCart}
+                            className="text-sm text-red-500 hover:text-red-600 font-medium flex items-center gap-2
+                                px-4 py-2 rounded-lg hover:bg-red-50 transition-all"
+                        >
+                            <FiTrash2 /> Clear Cart
+                        </motion.button> */}
                     </div>
 
-                    <div className="lg:sticky lg:top-4">
-                        <OrderSummary subtotal={subtotal} itemCount={itemCount} />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div className="lg:col-span-2 space-y-6">
+                            <AnimatePresence>
+                                {cart?.items?.filter(item => item?.product)?.map((item) => (
+                                    <CartItem
+                                        key={`${item.product._id}-${item.size}`}
+                                        item={item}
+                                        onUpdateQuantity={updateCartItem}
+                                        onRemove={removeFromCart}
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </div>
+
+                        <div className="lg:sticky lg:top-4">
+                            <OrderSummary subtotal={subtotal} itemCount={itemCount} handleCreateOrder={handleCreateOrder} isProcessing={isProcessing} />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+            <OrderSuccessModal
+                isOpen={showSuccessModal}
+                onClose={handleCloseModal}
+                orderId={orderId}
+            />
+        </>
     );
 };
 

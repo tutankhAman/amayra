@@ -5,7 +5,8 @@ import {
     createOrder, 
     getUserOrders, 
     getOrderById, 
-    updateOrderStatus, 
+    updateOrderStatus,
+    cancelOrder 
 } from "../controllers/order.controller.js"
 
 const router = Router();
@@ -13,6 +14,7 @@ const router = Router();
 
 // User routes
 router.post("/create", verifyJWT, createOrder);
+router.patch("/cancel", verifyJWT, cancelOrder);
 router.get("/user-orders", verifyJWT, getUserOrders);
 router.get("/:orderId", verifyJWT, getOrderById);
 

@@ -124,10 +124,11 @@ export const reviewService = {
 
 // Order processing
 export const orderService = {
-  create: (data) => post('/order/create', data),
+  create: () => post('/order/create'),
   getUserOrders: () => get('/order/user-orders'),
   getById: (id) => get(`/order/${id}`),
-  updateStatus: (orderId, data) => put(`/order/${orderId}/status`, data)
+  updateStatus: (orderId, data) => put(`/order/${orderId}/status`, data),
+  cancelOrder: (orderId) => patch(`/order/${orderId}/cancel`)
 };
 
 // Analytics and reporting
