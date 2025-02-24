@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { productService } from '../utils/api';
 import { 
-  Box, Button, Card, CardContent, CardMedia, Container, Dialog,
-  DialogActions, DialogContent, DialogTitle, Grid, IconButton,
-  TextField, Typography, MenuItem, FormControl, InputLabel, Select,
-  Snackbar, Alert
-} from '@mui/material';
-import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+  PencilSquareIcon, 
+  TrashIcon, 
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  XMarkIcon
+} from '@heroicons/react/24/outline';
 
 const AdminProducts = () => {
   const [products, setProducts] = useState([]);
@@ -25,6 +25,13 @@ const AdminProducts = () => {
     name: '', productId: '', description: '', price: '',
     discount: 0, type: 'Men', category: '', sizes: [],
     stock: 0, images: []
+  });
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    type: '',
+    category: '',
+    inStock: false
   });
 
   useEffect(() => {
@@ -124,28 +131,51 @@ const AdminProducts = () => {
     e.preventDefault();
     try {
       const form = new FormData();
-      Object.keys(createFormData).forEach(key => {
-        if (key === 'images') {
-          createFormData.images.forEach(image => form.append('images', image));
-        } else if (key === 'sizes') {
-          form.append('sizes', createFormData.sizes.join(','));
-        } else {
-          form.append(key, createFormData[key]);
-        }
-      });
+      
+      // Add text fields
+      form.append('name', createFormData.name);
+      form.append('productId', createFormData.productId);
+      form.append('description', createFormData.description);
+      form.append('price', createFormData.price);
+      form.append('discount', createFormData.discount);
+      form.append('type', createFormData.type);
+      form.append('category', createFormData.category);
+      form.append('stock', createFormData.stock);
+      
+      // Add sizes as a comma-separated string
+      if (createFormData.sizes.length > 0) {
+        form.append('sizes', createFormData.sizes.join(','));
+      }
 
-      await productService.create(form);
-      setOpenCreateDialog(false);
-      setCreateFormData({
-        name: '', productId: '', description: '', price: '',
-        discount: 0, type: 'Men', category: '', sizes: [],
-        stock: 0, images: []
-      });
-      showAlert('Product created successfully', 'success');
-      fetchProducts();
+      // Add images
+      if (createFormData.images.length > 0) {
+        createFormData.images.forEach(image => {
+          form.append('images', image);
+        });
+      }
+
+      // Log form data for debugging
+      for (let [key, value] of form.entries()) {
+        console.log(`${key}: ${value}`);
+      }
+
+      const response = await productService.create(form);
+      
+      if (response.data.success) {
+        setOpenCreateDialog(false);
+        setCreateFormData({
+          name: '', productId: '', description: '', price: '',
+          discount: 0, type: 'Men', category: '', sizes: [],
+          stock: 0, images: []
+        });
+        showAlert('Product created successfully', 'success');
+        fetchProducts();
+      } else {
+        throw new Error(response.data.message || 'Failed to create product');
+      }
     } catch (error) {
       console.error('Creation error:', error);
-      showAlert('Error creating product', 'error');
+      showAlert(error.response?.data?.message || 'Error creating product', 'error');
     }
   };
 
@@ -153,457 +183,668 @@ const AdminProducts = () => {
     setAlert({ open: true, message, severity });
   };
 
+  const filteredProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.productId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = !filters.type || product.type === filters.type;
+    const matchesCategory = !filters.category || product.category === filters.category;
+    const matchesStock = !filters.inStock || product.stock > 0;
+    return matchesSearch && matchesType && matchesCategory && matchesStock;
+  });
+
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Manage Products
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => setOpenCreateDialog(true)}
-        >
-          Create New Product
-        </Button>
-      </Box>
+    <div className="min-h-screen bg-gray-50 font-lato">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 bg-white p-4 sm:p-6 rounded-lg shadow">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            Manage Products
+          </h1>
+          <button
+            onClick={() => setOpenCreateDialog(true)}
+            className="w-full sm:w-auto bg-indigo-600 text-white px-4 sm:px-6 py-2 rounded-lg 
+              hover:bg-indigo-700 transition-colors duration-200 flex items-center justify-center gap-2 
+              text-sm sm:text-base font-medium"
+          >
+            <span>+ Add New Product</span>
+          </button>
+        </div>
 
-      <Grid container spacing={3}>
-        {products.map((product) => (
-          <Grid item xs={12} sm={6} md={4} key={product._id}>
-            <Card>
-              <CardMedia
-                component="img"
-                height="200"
-                image={product.images[0]}
-                alt={product.name}
-              />
-              <CardContent>
-                <Typography variant="h6" noWrap>{product.name}</Typography>
-                <Typography variant="body2" color="text.secondary">
-                  ID: {product.productId}
-                </Typography>
-                <Typography>₹{product.price}</Typography>
+        {/* Search and Filters */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg 
+                focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            />
+            <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          </div>
+
+          <select
+            value={filters.type}
+            onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 
+              focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="">All Types</option>
+            <option value="Men">Men</option>
+            <option value="Women">Women</option>
+            <option value="Kids">Kids</option>
+          </select>
+
+          <select
+            value={filters.category}
+            onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value }))}
+            className="border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 
+              focus:ring-indigo-500 focus:border-transparent"
+          >
+            <option value="">All Categories</option>
+            <option value="Sherwani">Sherwani</option>
+            <option value="Kurta">Kurta</option>
+            <option value="Lehenga">Lehenga</option>
+            <option value="Saree">Saree</option>
+            <option value="Pajama">Pajama</option>
+            <option value="Indo-Western">Indo-Western</option>
+          </select>
+
+          <button
+            onClick={() => setFilters(prev => ({ ...prev, inStock: !prev.inStock }))}
+            className={`px-4 py-2 rounded-lg border ${
+              filters.inStock 
+                ? 'bg-indigo-100 border-indigo-500 text-indigo-700' 
+                : 'border-gray-300 text-gray-700'
+            }`}
+          >
+            In Stock Only
+          </button>
+        </div>
+
+        {/* Products Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+          {/* Product Card */}
+          {filteredProducts.map((product) => (
+            <div key={product._id} className="bg-white rounded-lg shadow-md overflow-hidden 
+              hover:-translate-y-1 transition-transform duration-200">
+              <div className="aspect-w-3 aspect-h-2 sm:aspect-w-4 sm:aspect-h-3">
+                <img
+                  src={product.images[0]}
+                  alt={product.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="p-4 sm:p-6">
+                <h3 className="text-lg sm:text-xl font-semibold text-gray-900 line-clamp-2">
+                  {product.name}
+                </h3>
+                <p className="text-gray-500 text-sm mb-2">ID: {product.productId}</p>
+              
+              <div className="mb-4">
+                <p className="text-xl font-bold text-indigo-600">₹{product.price}</p>
                 {product.discount > 0 && (
-                  <Typography color="error">
-                    Discount: ₹{product.discount} | Final Price: ₹{product.sellingPrice}
-                  </Typography>
+                  <div className="mt-1">
+                    <p className="text-red-500 text-sm">Discount: ₹{product.discount}</p>
+                    <p className="font-semibold">Final Price: ₹{product.sellingPrice}</p>
+                  </div>
                 )}
-                <Typography variant="body2">Stock: {product.stock}</Typography>
-                
-                <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
-                  <IconButton onClick={() => handleEdit(product)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton 
-                    onClick={() => {
-                      console.log('Setting delete ID:', product.productId);
-                      setDeleteId(product.productId);
-                      setOpenDeleteDialog(true);
-                    }}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              </div>
 
-      {/* Edit Product Dialog */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Edit Product</DialogTitle>
-        <DialogContent>
-          <Box component="form" noValidate sx={{ mt: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Name"
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Product ID"
-                  value={formData.productId}
-                  onChange={(e) => setFormData(prev => ({ ...prev, productId: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Description"
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Type</InputLabel>
-                  <Select
-                    value={formData.type}
-                    label="Type"
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
-                  >
-                    <MenuItem value="Men">Men</MenuItem>
-                    <MenuItem value="Women">Women</MenuItem>
-                    <MenuItem value="Kids">Kids</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={formData.category}
-                    label="Category"
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                  >
-                    <MenuItem value="Sherwani">Sherwani</MenuItem>
-                    <MenuItem value="Kurta">Kurta</MenuItem>
-                    <MenuItem value="Lehenga">Lehenga</MenuItem>
-                    <MenuItem value="Saree">Saree</MenuItem>
-                    <MenuItem value="Pajama">Pajama</MenuItem>
-                    <MenuItem value="Indo-Western">Indo-Western</MenuItem>
-                    <MenuItem value="Others">Others</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Sizes</InputLabel>
-                  <Select
-                    multiple
-                    value={formData.sizes || []}
-                    label="Sizes"
-                    onChange={(e) => {
-                      const selectedSizes = e.target.value;
-                      setFormData(prev => ({
-                        ...prev,
-                        sizes: Array.isArray(selectedSizes) ? selectedSizes : []
-                      }));
-                    }}
-                  >
-                    <MenuItem value="S">S</MenuItem>
-                    <MenuItem value="M">M</MenuItem>
-                    <MenuItem value="L">L</MenuItem>
-                    <MenuItem value="XL">XL</MenuItem>
-                    <MenuItem value="Free Size">Free Size</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  label="Price"
-                  value={formData.price}
-                  onChange={(e) => {
-                    const price = Number(e.target.value);
-                    const discount = Number(formData.discount || 0);
-                    setFormData(prev => ({
-                      ...prev,
-                      price,
-                      sellingPrice: price - discount
-                    }));
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Discount"
-                  value={formData.discount}
-                  onChange={(e) => {
-                    const discount = Number(e.target.value);
-                    const price = Number(formData.price);
-                    setFormData(prev => ({
-                      ...prev,
-                      discount,
-                      sellingPrice: price - discount
-                    }));
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  disabled
-                  fullWidth
-                  label="Selling Price"
-                  value={formData.price - (formData.discount || 0)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  label="Stock"
-                  value={formData.stock}
-                  onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Button variant="contained" component="label">
-                  Upload Images
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </Button>
-                {formData.images.length > 0 && (
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {formData.images.length} new images selected
-                  </Typography>
-                )}
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
-          <Button onClick={handleUpdate} variant="contained">Save Changes</Button>
-        </DialogActions>
-      </Dialog>
+              <div className={`mb-4 px-3 py-1.5 rounded-full text-sm inline-block
+                ${product.stock > 0 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-red-100 text-red-800'
+                }`}
+              >
+                {product.stock > 0 ? `In Stock: ${product.stock}` : 'Out of Stock'}
+              </div>
 
-      {/* Create Product Dialog */}
-      <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Create New Product</DialogTitle>
-        <DialogContent>
-          <Box component="form" noValidate sx={{ mt: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Name"
-                  value={createFormData.name}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="Product ID"
-                  value={createFormData.productId}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, productId: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Description"
-                  value={createFormData.description}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Type</InputLabel>
-                  <Select
-                    value={createFormData.type}
-                    label="Type"
-                    onChange={(e) => setCreateFormData(prev => ({ ...prev, type: e.target.value }))}
-                  >
-                    <MenuItem value="Men">Men</MenuItem>
-                    <MenuItem value="Women">Women</MenuItem>
-                    <MenuItem value="Kids">Kids</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth required>
-                  <InputLabel>Category</InputLabel>
-                  <Select
-                    value={createFormData.category}
-                    label="Category"
-                    onChange={(e) => setCreateFormData(prev => ({ ...prev, category: e.target.value }))}
-                  >
-                    <MenuItem value="Sherwani">Sherwani</MenuItem>
-                    <MenuItem value="Kurta">Kurta</MenuItem>
-                    <MenuItem value="Lehenga">Lehenga</MenuItem>
-                    <MenuItem value="Saree">Saree</MenuItem>
-                    <MenuItem value="Pajama">Pajama</MenuItem>
-                    <MenuItem value="Indo-Western">Indo-Western</MenuItem>
-                    <MenuItem value="Others">Others</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
-                  <InputLabel>Sizes</InputLabel>
-                  <Select
-                    multiple
-                    value={createFormData.sizes || []}
-                    label="Sizes"
-                    onChange={(e) => {
-                      const selectedSizes = e.target.value;
-                      setCreateFormData(prev => ({
-                        ...prev,
-                        sizes: Array.isArray(selectedSizes) ? selectedSizes : []
-                      }));
-                    }}
-                  >
-                    <MenuItem value="S">S</MenuItem>
-                    <MenuItem value="M">M</MenuItem>
-                    <MenuItem value="L">L</MenuItem>
-                    <MenuItem value="XL">XL</MenuItem>
-                    <MenuItem value="Free Size">Free Size</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  label="Price"
-                  value={createFormData.price}
-                  onChange={(e) => {
-                    const price = Number(e.target.value);
-                    const discount = Number(createFormData.discount || 0);
-                    setCreateFormData(prev => ({
-                      ...prev,
-                      price,
-                      sellingPrice: price - discount
-                    }));
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Discount"
-                  value={createFormData.discount}
-                  onChange={(e) => {
-                    const discount = Number(e.target.value);
-                    const price = Number(createFormData.price);
-                    setCreateFormData(prev => ({
-                      ...prev,
-                      discount,
-                      sellingPrice: price - discount
-                    }));
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  disabled
-                  fullWidth
-                  label="Selling Price"
-                  value={createFormData.price - (createFormData.discount || 0)}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  required
-                  type="number"
-                  label="Stock"
-                  value={createFormData.stock}
-                  onChange={(e) => setCreateFormData(prev => ({ ...prev, stock: e.target.value }))}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <Button
-                  variant="contained"
-                  component="label"
-                  required
+              <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800"
                 >
-                  Upload Images (Required)
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    accept="image/*"
-                    onChange={(e) => setCreateFormData(prev => ({
-                      ...prev,
-                      images: Array.from(e.target.files)
-                    }))}
-                  />
-                </Button>
-                {createFormData.images.length > 0 && (
-                  <Typography variant="body2" sx={{ mt: 1 }}>
-                    {createFormData.images.length} images selected
-                  </Typography>
-                )}
-              </Grid>
-            </Grid>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={handleCreate} 
-            variant="contained"
-            disabled={!createFormData.name || !createFormData.productId || !createFormData.images.length}
-          >
-            Create Product
-          </Button>
-        </DialogActions>
-      </Dialog>
+                  <PencilSquareIcon className="h-5 w-5" />
+                  <span>Edit</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setDeleteId(product.productId);
+                    setOpenDeleteDialog(true);
+                  }}
+                  className="flex items-center gap-1 text-red-600 hover:text-red-800"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                  <span>Delete</span>
+                </button>
+              </div>
+              </div>
+            </div>
+          ))}
+        </div>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={openDeleteDialog} onClose={() => {
-        setOpenDeleteDialog(false);
-        setDeleteId(null);
-      }}>
-        <DialogTitle>Confirm Delete</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to delete this product? This action cannot be undone.
-          </Typography>
-          <Typography color="error" sx={{ mt: 1 }}>
-            Product ID: {deleteId}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => {
-            setOpenDeleteDialog(false);
-            setDeleteId(null);
-          }}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDelete} 
-            color="error" 
-            variant="contained"
-            disabled={!deleteId}
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Edit Modal */}
+        {openDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50">
+            <div className="bg-white w-full min-h-screen sm:min-h-0 sm:rounded-lg sm:max-w-3xl sm:my-8 sm:mx-4 overflow-hidden">
+              <div className="sticky top-0 bg-white z-10 px-4 py-4 border-b flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Edit Product
+                </h2>
+                <button 
+                  onClick={() => setOpenDialog(false)}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <XMarkIcon className="h-6 w-6" />
+                </button>
+              </div>
 
-      {/* Alert Snackbar */}
-      <Snackbar
-        open={alert.open}
-        autoHideDuration={6000}
-        onClose={() => setAlert({ ...alert, open: false })}
-      >
-        <Alert severity={alert.severity} onClose={() => setAlert({ ...alert, open: false })}>
-          {alert.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+              <div className="px-4 py-6 space-y-6 max-h-[calc(100vh-120px)] sm:max-h-[600px] overflow-y-auto">
+                <form onSubmit={handleUpdate} className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                    {/* Name field - full width */}
+                    <div className="col-span-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    {/* Two columns for ID and Type */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product ID
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.productId}
+                        onChange={(e) => setFormData(prev => ({ ...prev, productId: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type
+                      </label>
+                      <select
+                        value={formData.type}
+                        onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                      >
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Kids">Kids</option>
+                      </select>
+                    </div>
+
+                    {/* Category and Sizes */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category
+                      </label>
+                      <select
+                        value={formData.category}
+                        onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="">Select Category</option>
+                        <option value="Sherwani">Sherwani</option>
+                        <option value="Kurta">Kurta</option>
+                        <option value="Lehenga">Lehenga</option>
+                        <option value="Saree">Saree</option>
+                        <option value="Pajama">Pajama</option>
+                        <option value="Indo-Western">Indo-Western</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sizes
+                      </label>
+                      <select
+                        multiple
+                        value={formData.sizes}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          sizes: Array.from(e.target.selectedOptions, option => option.value)
+                        }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                      >
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="Free Size">Free Size</option>
+                      </select>
+                    </div>
+
+                    {/* Description - full width */}
+                    <div className="col-span-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={4}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    {/* Price fields */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Price
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          price: e.target.value,
+                          sellingPrice: e.target.value - (prev.discount || 0)
+                        }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.discount}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          discount: e.target.value,
+                          sellingPrice: prev.price - e.target.value
+                        }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    {/* Stock and Images */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Stock
+                      </label>
+                      <input
+                        type="number"
+                        value={formData.stock}
+                        onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div className="col-span-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Images
+                      </label>
+                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 
+                        border-dashed rounded-lg hover:border-indigo-500 transition-colors">
+                        <div className="space-y-1 text-center">
+                          <div className="flex text-sm text-gray-600">
+                            <label className="relative cursor-pointer bg-white rounded-md font-medium 
+                              text-indigo-600 hover:text-indigo-500">
+                              <span>Upload files</span>
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleImageChange}
+                                className="sr-only"
+                              />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</p>
+                          {formData.images.length > 0 && (
+                            <p className="text-sm text-indigo-600 font-medium">
+                              {formData.images.length} new images selected
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+              <div className="sticky bottom-0 bg-white px-4 py-4 border-t mt-auto">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setOpenDialog(false)}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 
+                      rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 
+                      focus:ring-indigo-500"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdate}
+                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg 
+                      hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 
+                      focus:ring-indigo-500"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {openDeleteDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-md w-full mx-4">
+              <div className="p-6">
+                <h2 className="text-2xl font-bold mb-4">Confirm Delete</h2>
+                <p className="text-gray-600 mb-2">
+                  Are you sure you want to delete this product? This action cannot be undone.
+                </p>
+                <p className="text-red-600 font-medium mb-6">
+                  Product ID: {deleteId}
+                </p>
+
+                <div className="flex justify-end gap-4">
+                  <button
+                    onClick={() => {
+                      setOpenDeleteDialog(false);
+                      setDeleteId(null);
+                    }}
+                    className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleDelete}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg 
+                      hover:bg-red-700 transition-colors"
+                  >
+                    Delete Product
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Product Modal */}
+        {openCreateDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="bg-white w-full sm:rounded-lg sm:max-w-3xl h-full sm:h-auto sm:max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white z-10 px-4 py-3 sm:p-6 border-b">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                    Add New Product
+                  </h2>
+                  <button 
+                    onClick={() => setOpenCreateDialog(false)}
+                    className="p-2 hover:bg-gray-100 rounded-full"
+                  >
+                    <XMarkIcon className="h-5 w-5 sm:h-6 sm:w-6" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 sm:p-6">
+                <form onSubmit={handleCreate} className="space-y-4 sm:space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={createFormData.name}
+                        onChange={(e) => setCreateFormData(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg 
+                          focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product ID *
+                      </label>
+                      <input
+                        type="text"
+                        value={createFormData.productId}
+                        onChange={(e) => setCreateFormData(prev => ({ ...prev, productId: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Type *
+                      </label>
+                      <select
+                        value={createFormData.type}
+                        onChange={(e) => setCreateFormData(prev => ({ ...prev, type: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="Men">Men</option>
+                        <option value="Women">Women</option>
+                        <option value="Kids">Kids</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Category *
+                      </label>
+                      <select
+                        value={createFormData.category}
+                        onChange={(e) => setCreateFormData(prev => ({ ...prev, category: e.target.value }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                      >
+                        <option value="">Select Category</option>
+                        <option value="Sherwani">Sherwani</option>
+                        <option value="Kurta">Kurta</option>
+                        <option value="Lehenga">Lehenga</option>
+                        <option value="Saree">Saree</option>
+                        <option value="Pajama">Pajama</option>
+                        <option value="Indo-Western">Indo-Western</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sizes
+                      </label>
+                      <select
+                        multiple
+                        value={createFormData.sizes}
+                        onChange={(e) => setCreateFormData(prev => ({
+                          ...prev,
+                          sizes: Array.from(e.target.selectedOptions, option => option.value)
+                        }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                      >
+                        <option value="S">S</option>
+                        <option value="M">M</option>
+                        <option value="L">L</option>
+                        <option value="XL">XL</option>
+                        <option value="Free Size">Free Size</option>
+                      </select>
+                      <p className="text-sm text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple sizes</p>
+                    </div>
+
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Description
+                      </label>
+                      <textarea
+                        value={createFormData.description}
+                        onChange={(e) => setCreateFormData(prev => ({ ...prev, description: e.target.value }))}
+                        rows={4}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Price *
+                      </label>
+                      <input
+                        type="number"
+                        value={createFormData.price}
+                        onChange={(e) => setCreateFormData(prev => ({ 
+                          ...prev, 
+                          price: Number(e.target.value),
+                          sellingPrice: Number(e.target.value) - (prev.discount || 0)
+                        }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                        min="0"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount
+                      </label>
+                      <input
+                        type="number"
+                        value={createFormData.discount}
+                        onChange={(e) => setCreateFormData(prev => ({ 
+                          ...prev, 
+                          discount: Number(e.target.value),
+                          sellingPrice: prev.price - Number(e.target.value)
+                        }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        min="0"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Stock *
+                      </label>
+                      <input
+                        type="number"
+                        value={createFormData.stock}
+                        onChange={(e) => setCreateFormData(prev => ({ ...prev, stock: Number(e.target.value) }))}
+                        className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 
+                          focus:ring-indigo-500 focus:border-transparent"
+                        required
+                        min="0"
+                      />
+                    </div>
+
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Images *
+                      </label>
+                      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 
+                        border-dashed rounded-lg hover:border-indigo-500 transition-colors">
+                        <div className="space-y-1 text-center">
+                          <div className="flex text-sm text-gray-600">
+                            <label className="relative cursor-pointer bg-white rounded-md font-medium 
+                              text-indigo-600 hover:text-indigo-500 focus-within:outline-none 
+                              focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                              <span>Upload files</span>
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                className="sr-only"
+                                onChange={(e) => setCreateFormData(prev => ({
+                                  ...prev,
+                                  images: Array.from(e.target.files)
+                                }))}
+                                required
+                              />
+                            </label>
+                            <p className="pl-1">or drag and drop</p>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            PNG, JPG, GIF up to 10MB each
+                          </p>
+                          {createFormData.images.length > 0 && (
+                            <p className="text-sm text-indigo-600 font-medium">
+                              {createFormData.images.length} images selected
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="sticky bottom-0 bg-white -mx-4 px-4 sm:mx-0 sm:px-0 py-3 sm:py-4 border-t mt-6">
+                    <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setOpenCreateDialog(false)}
+                        className="w-full sm:w-auto px-4 py-2.5 text-gray-700 bg-white border border-gray-300 
+                          hover:bg-gray-50 rounded-lg text-sm font-medium"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="w-full sm:w-auto px-4 py-2.5 bg-indigo-600 text-white rounded-lg 
+                          hover:bg-indigo-700 transition-colors text-sm font-medium"
+                        disabled={!createFormData.name || !createFormData.productId || !createFormData.images.length}
+                      >
+                        Create Product
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast Notification */}
+        {alert.open && (
+          <div className={`fixed bottom-4 right-4 px-4 sm:px-6 py-2 sm:py-3 rounded-lg shadow-lg
+            ${alert.severity === 'success' ? 'bg-green-500' : 'bg-red-500'} 
+            text-white text-sm sm:text-base max-w-[90vw] sm:max-w-md`}
+          >
+            {alert.message}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

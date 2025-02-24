@@ -1,19 +1,19 @@
-// API configuration and services
 import axios from 'axios';
+
+const API_URL = 'http://localhost:8000/api/v1';
+
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'multipart/form-data'
+  },
+  withCredentials: true
+});
 
 // Check for auth token in cookies
 const hasAuthCookie = () => {
   return document.cookie.includes('accessToken=');
 };
-
-// Create axios instance with default config
-export const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  withCredentials: true
-});
 
 // Add auth check for protected routes
 api.interceptors.request.use(
@@ -31,13 +31,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => response,
   error => {
-    if (!error.response || error.response.status !== 401) {
-      console.error('API Error:', {
-        status: error.response?.status,
-        message: error.response?.data?.message || 'An error occurred',
-        url: error.config?.url
-      });
-    }
+    console.error('API Error Details:', {
+      status: error.response?.status,
+      message: error.response?.data?.message,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method,
+    });
     return Promise.reject(error);
   }
 );
@@ -51,119 +51,61 @@ const apiMethods = {
   del: (url) => api.delete(url)
 };
 
-const { get, post, put, patch, del } = apiMethods;
-
-// User authentication and profile management
-export const userService = {
-  register: async (userData) => {
-    try {
-      const response = await api.post('/users/register', {
-        name: userData.name,
-        email: userData.email,
-        phone: userData.phone,
-        password: userData.password
-      });
-      return response;
-    } catch (error) {
-      throw error;
-    }
-  },
-  login: (data) => post('/users/login', data),
-  logout: () => post('/users/logout'),
-  refreshToken: () => post('/users/refresh-token'),
-  getCurrentUser: () => get('/users/current-user'),
-  changePassword: (data) => {
-    return api.patch('/users/change-password', {
-      oldPassword: data.oldPassword,
-      newPassword: data.newPassword
-    });
-  },
-  updateAccount: (data) => patch('/users/update-account', data),
-  updateAvatar: (formData) => {
-    return api.patch('/users/avatar', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  },
-  getWishlist: () => get('/users/wishlist'),
-  addToWishlist: (productId) => post('/users/wishlist', { productId }),
-  removeFromWishlist: (productId) => del(`/users/wishlist/${productId}`)
-};
-
-// Product CRUD operations
 export const productService = {
-  getAll: (params) => get('/product', params),
-  getById: (id) => get(`/product/${id}`),
-  search: (params) => get('/product/search', params),
-  create: (formData) => {
-    return api.post('/product/create-product', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  },
-  update: (productId, formData) => {
-    return api.put(`/product/update/${productId}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
-    });
-  },
-  delete: (productId) => del(`/product/delete/${productId}`)
+  getAll: (params) => apiMethods.get('/product', params),
+  getById: (id) => apiMethods.get(`/product/${id}`),
+  search: (params) => apiMethods.get('/product/search', params),
+  create: (formData) => apiMethods.post('/product/create-product', formData),
+  update: (productId, formData) => apiMethods.put(`/product/update/${productId}`, formData),
+  delete: (productId) => apiMethods.del(`/product/delete/${productId}`)
 };
 
-// Shopping cart management
 export const cartService = {
-  get: () => get('/cart'),
-  add: (data) => post('/cart/add', {
-    productId: data.productId,
-    quantity: data.quantity,
-    size: data.size
-  }),
-  update: (data) => put('/cart/update', {
-    productId: data.productId,
-    quantity: data.quantity,
-    size: data.size
-  }),
-  remove: ({ productId, size }) => del(`/cart/delete?productId=${productId}&size=${size}`),
-  clear: () => del('/cart/clear')
+  get: () => apiMethods.get('/cart'),
+  add: (data) => apiMethods.post('/cart/add', data),
+  update: (data) => apiMethods.put('/cart/update', data),
+  remove: ({ productId, size }) => apiMethods.del(`/cart/delete?productId=${productId}&size=${size}`),
+  clear: () => apiMethods.del('/cart/clear')
 };
 
-// Product reviews
 export const reviewService = {
-  get: (productId) => api.post('/reviews', { productId }),
-  add: (data) => api.post('/reviews/add', data),
-  update: (data) => api.put('/reviews/update', data),
-  delete: (reviewId) => api.delete('/reviews/delete', { data: { reviewId } })
+  get: (productId) => apiMethods.post('/reviews', { productId }),
+  add: (data) => apiMethods.post('/reviews/add', data),
+  update: (data) => apiMethods.put('/reviews/update', data),
+  delete: (reviewId) => apiMethods.del(`/reviews/delete/${reviewId}`)
 };
 
-// Order processing
 export const orderService = {
-  create: () => post('/order/create'),
-  getUserOrders: () => get('/order/user-orders'),
-  getById: (id) => get(`/order/${id}`),
-  updateStatus: (orderId, data) => patch(`/order/${orderId}/status`, data), // Changed from put to patch
-  cancelOrder: (orderId) => patch(`/order/${orderId}/cancel`),
-  getAll: () => {
-    console.log('Fetching all orders...');
-    return get('/order/all').catch(error => {
-      console.error('Error fetching orders:', error);
-      throw error;
-    });
-  }
+  create: () => apiMethods.post('/order/create'),
+  getUserOrders: () => apiMethods.get('/order/user-orders'),
+  getById: (id) => apiMethods.get(`/order/${id}`),
+  updateStatus: (orderId, data) => apiMethods.patch(`/order/${orderId}/status`, data),
+  cancelOrder: (orderId) => apiMethods.patch(`/order/${orderId}/cancel`),
+  getAll: () => apiMethods.get('/order/all')
 };
 
-// Analytics and reporting
 export const analyticsService = {
-  getSales: (params) => get('/analytics', params),  // Added params for date range
-  getProduct: (productId, params) => get(`/analytics/product/${productId}`, params), // Changed from POST to GET
-  getTopProducts: () => get('/analytics/top-products')
+  getSales: (params) => apiMethods.get('/analytics', params),
+  getProduct: (productId, params) => apiMethods.get(`/analytics/product/${productId}`, params),
+  getTopProducts: () => apiMethods.get('/analytics/top-products')
+};
+
+export const userService = {
+  register: (userData) => apiMethods.post('/users/register', userData),
+  login: (data) => apiMethods.post('/users/login', data),
+  logout: () => apiMethods.post('/users/logout'),
+  refreshToken: () => apiMethods.post('/users/refresh-token'),
+  getCurrentUser: () => apiMethods.get('/users/current-user'),
+  changePassword: (data) => apiMethods.patch('/users/change-password', data),
+  updateAccount: (data) => apiMethods.patch('/users/update-account', data),
+  updateAvatar: (formData) => apiMethods.patch('/users/avatar', formData),
+  getWishlist: () => apiMethods.get('/users/wishlist'),
+  addToWishlist: (productId) => apiMethods.post('/users/wishlist', { productId }),
+  removeFromWishlist: (productId) => apiMethods.del(`/users/wishlist/${productId}`)
 };
 
 // Export all services
 export default {
-  ...apiMethods,
   api,
   userService,
   productService,
