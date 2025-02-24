@@ -3,6 +3,7 @@ import { FiPhone, FiLock, FiArrowRight, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import loginCover from '../assets/images/login-cover3.jpeg';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ const Login = () => {
         <div 
           className="absolute inset-0 w-full h-full z-0"
           style={{
-            backgroundImage: `url('/src/assets/images/login-cover3.jpeg')`,
+            backgroundImage: `url(${loginCover})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -61,7 +62,7 @@ const Login = () => {
         <div className="hidden lg:block lg:w-[45%]">
           <div className="p-6">
             <img
-              src="/src/assets/images/login-cover3.jpeg"
+              src={loginCover}
               alt="Login Cover"
               className="object-cover w-full rounded-xl"
             />

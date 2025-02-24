@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Shop from '../components/buttons/Shop'
 import ProductCard from '../components/cards/productCard'
 import { analyticsService } from '../utils/api'
+import heroImage from '../assets/images/hero-image.png'
 
 const Home = () => {
     const navigate = useNavigate();
@@ -32,7 +33,7 @@ const Home = () => {
                     className="w-full h-[230px] sm:h-[400px] md:h-[500px] lg:h-[600px] 
                     mt-10 sm:mt-20 lg:mt-12 mb-8 lg:mb-14 rounded-lg bg-cover bg-center bg-no-repeat relative"
                     style={{
-                        backgroundImage: "url('/src/assets/images/hero-image.png')"
+                        backgroundImage: `url(${heroImage})`
                     }}
                 >
                     <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 md:bottom-16 md:left-16 lg:bottom-20 lg:left-24">
