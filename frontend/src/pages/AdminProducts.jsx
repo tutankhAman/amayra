@@ -20,6 +20,12 @@ const AdminProducts = () => {
     discount: '', type: '', category: '', sizes: [], stock: '',
     images: []
   });
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [createFormData, setCreateFormData] = useState({
+    name: '', productId: '', description: '', price: '',
+    discount: 0, type: 'Men', category: '', sizes: [],
+    stock: 0, images: []
+  });
 
   useEffect(() => {
     fetchProducts();
@@ -94,15 +100,53 @@ const AdminProducts = () => {
     }));
   };
 
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    try {
+      const form = new FormData();
+      Object.keys(createFormData).forEach(key => {
+        if (key === 'images') {
+          createFormData.images.forEach(image => form.append('images', image));
+        } else if (key === 'sizes') {
+          form.append('sizes', createFormData.sizes.join(','));
+        } else {
+          form.append(key, createFormData[key]);
+        }
+      });
+
+      await productService.create(form);
+      setOpenCreateDialog(false);
+      setCreateFormData({
+        name: '', productId: '', description: '', price: '',
+        discount: 0, type: 'Men', category: '', sizes: [],
+        stock: 0, images: []
+      });
+      showAlert('Product created successfully', 'success');
+      fetchProducts();
+    } catch (error) {
+      console.error('Creation error:', error);
+      showAlert('Error creating product', 'error');
+    }
+  };
+
   const showAlert = (message, severity) => {
     setAlert({ open: true, message, severity });
   };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Manage Products
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Typography variant="h4" gutterBottom>
+          Manage Products
+        </Typography>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setOpenCreateDialog(true)}
+        >
+          Create New Product
+        </Button>
+      </Box>
 
       <Grid container spacing={3}>
         {products.map((product) => (
@@ -312,6 +356,187 @@ const AdminProducts = () => {
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
           <Button onClick={handleUpdate} variant="contained">Save Changes</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Product Dialog */}
+      <Dialog open={openCreateDialog} onClose={() => setOpenCreateDialog(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Create New Product</DialogTitle>
+        <DialogContent>
+          <Box component="form" noValidate sx={{ mt: 2 }}>
+            <Grid container spacing={2}>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Name"
+                  value={createFormData.name}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Product ID"
+                  value={createFormData.productId}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, productId: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={4}
+                  label="Description"
+                  value={createFormData.description}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, description: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Type</InputLabel>
+                  <Select
+                    value={createFormData.type}
+                    label="Type"
+                    onChange={(e) => setCreateFormData(prev => ({ ...prev, type: e.target.value }))}
+                  >
+                    <MenuItem value="Men">Men</MenuItem>
+                    <MenuItem value="Women">Women</MenuItem>
+                    <MenuItem value="Kids">Kids</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Category</InputLabel>
+                  <Select
+                    value={createFormData.category}
+                    label="Category"
+                    onChange={(e) => setCreateFormData(prev => ({ ...prev, category: e.target.value }))}
+                  >
+                    <MenuItem value="Sherwani">Sherwani</MenuItem>
+                    <MenuItem value="Kurta">Kurta</MenuItem>
+                    <MenuItem value="Lehenga">Lehenga</MenuItem>
+                    <MenuItem value="Saree">Saree</MenuItem>
+                    <MenuItem value="Pajama">Pajama</MenuItem>
+                    <MenuItem value="Indo-Western">Indo-Western</MenuItem>
+                    <MenuItem value="Others">Others</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Sizes</InputLabel>
+                  <Select
+                    multiple
+                    value={createFormData.sizes || []}
+                    label="Sizes"
+                    onChange={(e) => {
+                      const selectedSizes = e.target.value;
+                      setCreateFormData(prev => ({
+                        ...prev,
+                        sizes: Array.isArray(selectedSizes) ? selectedSizes : []
+                      }));
+                    }}
+                  >
+                    <MenuItem value="S">S</MenuItem>
+                    <MenuItem value="M">M</MenuItem>
+                    <MenuItem value="L">L</MenuItem>
+                    <MenuItem value="XL">XL</MenuItem>
+                    <MenuItem value="Free Size">Free Size</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  type="number"
+                  label="Price"
+                  value={createFormData.price}
+                  onChange={(e) => {
+                    const price = Number(e.target.value);
+                    const discount = Number(createFormData.discount || 0);
+                    setCreateFormData(prev => ({
+                      ...prev,
+                      price,
+                      sellingPrice: price - discount
+                    }));
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  type="number"
+                  label="Discount"
+                  value={createFormData.discount}
+                  onChange={(e) => {
+                    const discount = Number(e.target.value);
+                    const price = Number(createFormData.price);
+                    setCreateFormData(prev => ({
+                      ...prev,
+                      discount,
+                      sellingPrice: price - discount
+                    }));
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  disabled
+                  fullWidth
+                  label="Selling Price"
+                  value={createFormData.price - (createFormData.discount || 0)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  type="number"
+                  label="Stock"
+                  value={createFormData.stock}
+                  onChange={(e) => setCreateFormData(prev => ({ ...prev, stock: e.target.value }))}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  variant="contained"
+                  component="label"
+                  required
+                >
+                  Upload Images (Required)
+                  <input
+                    type="file"
+                    hidden
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => setCreateFormData(prev => ({
+                      ...prev,
+                      images: Array.from(e.target.files)
+                    }))}
+                  />
+                </Button>
+                {createFormData.images.length > 0 && (
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    {createFormData.images.length} images selected
+                  </Typography>
+                )}
+              </Grid>
+            </Grid>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCreateDialog(false)}>Cancel</Button>
+          <Button 
+            onClick={handleCreate} 
+            variant="contained"
+            disabled={!createFormData.name || !createFormData.productId || !createFormData.images.length}
+          >
+            Create Product
+          </Button>
         </DialogActions>
       </Dialog>
 
