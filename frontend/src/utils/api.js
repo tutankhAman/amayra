@@ -1,21 +1,23 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL  + '/api/v1' || 'http://localhost:8000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL + '/api/v1' || 'http://localhost:8000/api/v1';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true
+  withCredentials: true  // This is correct for cookies
 });
 
-// Check for auth token in cookies
-const hasAuthCookie = () => {
-  return document.cookie.includes('accessToken=');
+// Check for auth token in cookies and return it if found
+const getAuthToken = () => {
+  const cookieString = document.cookie;
+  const match = cookieString.match(/accessToken=([^;]+)/);
+  return match ? match[1] : null;
 };
 
-// Add auth check for protected routes
+// Add auth token to requests
 api.interceptors.request.use(
   (config) => {
     // Set content type to multipart/form-data only for file uploads
@@ -26,11 +28,18 @@ api.interceptors.request.use(
     const publicPaths = ['/users/login', '/users/register'];
     if (publicPaths.some(path => config.url?.includes(path))) return config;
     
-    if (hasAuthCookie()) config.headers['has-auth'] = 'true';
+    // Add token to Authorization header
+    const token = getAuthToken();
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
     return config;
   },
   (error) => Promise.reject(error)
 );
+
+// Rest of your code remains unchanged
 
 // Global error handling
 api.interceptors.response.use(

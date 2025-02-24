@@ -7,7 +7,10 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
         
         if (!token) {
-            throw new Error("Unauthorized request");
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized request - No token provided"
+            });
         }
         
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
@@ -15,12 +18,22 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
         
         if (!user) {
-            throw new Error("Invalid Access Token");
+            return res.status(401).json({
+                success: false,
+                message: "Invalid Access Token - User not found"
+            });
         }
         
         req.user = user;
         next();
     } catch (error) {
-        throw new Error(error?.message || "Invalid access token");
+        // Log the specific error for debugging
+        console.log("JWT verification error:", error.message);
+        
+        return res.status(401).json({
+            success: false,
+            message: "Invalid or expired token",
+            error: process.env.NODE_ENV === 'production' ? "Authentication failed" : error.message
+        });
     }
 });
