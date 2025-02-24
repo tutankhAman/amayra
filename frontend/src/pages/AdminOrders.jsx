@@ -140,7 +140,7 @@ const AdminOrders = () => {
                                             <td className="px-6 py-4">
                                                 {order.items.map((item, index) => (
                                                     <div key={index} className="text-sm text-gray-900">
-                                                        {item.product.name} × {item.quantity}
+                                                        {item.product.productId} × {item.quantity}
                                                     </div>
                                                 ))}
                                             </td>
@@ -202,7 +202,7 @@ const AdminOrders = () => {
                                 <div className="space-y-2 mb-3">
                                     {order.items.map((item, index) => (
                                         <div key={index} className="text-sm">
-                                            {item.product.name} × {item.quantity}
+                                            {item.product.productId} × {item.quantity}
                                         </div>
                                     ))}
                                 </div>

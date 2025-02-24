@@ -2,6 +2,7 @@ import React from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
+import logo from '../assets/icons/logo.svg';
 
 // Fix for default marker icon
 delete L.Icon.Default.prototype._getIconUrl;
@@ -21,7 +22,7 @@ const Footer = () => {
           <div className="mb-8 md:mb-0">
             <h3 className="text-xl font-bold mb-4">Amayra Ethnic Collection</h3>
             <p className="text-gray-400">Your destination for authentic ethnic wear and traditional fashion.</p>
-            <img src='src/assets/icons/logo.svg'></img>
+            <img src={logo} alt="Amayra Logo" />
           </div>
           
           <div>

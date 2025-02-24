@@ -4,6 +4,7 @@ import { FaSearch, FaShoppingCart, FaBars, FaUserCircle } from 'react-icons/fa';
 import { useUser } from '../context/UserContext';
 import { useCart } from '../context/CartContext';
 import SignUp from '../components/buttons/SignUp';
+import logo from '../assets/icons/logo.svg';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -102,7 +103,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/">
-              <img className="h-8 w-auto" src="src/assets/icons/logo.svg" alt="Amayra Logo" />
+              <img className="h-8 w-auto" src={logo} alt="Amayra Logo" />
             </Link>
           </div>
 

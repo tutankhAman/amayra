@@ -166,7 +166,7 @@ const Admin = () => {
       <div className="flex flex-col gap-4 mb-6 md:mb-10 bg-white/80 backdrop-blur-sm p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100">
         <div className="flex flex-wrap gap-3">
           <button 
-            onClick={() => navigate('/admin/orders')} 
+            onClick={() => navigate('/order/all')} 
             className="flex-1 min-w-[120px] px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-blue-500/25 text-sm md:text-base font-medium"
           >
             Orders
