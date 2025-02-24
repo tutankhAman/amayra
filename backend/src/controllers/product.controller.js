@@ -193,12 +193,27 @@ const updateProduct = asyncHandler(async (req, res) => {
         }
     }
 
+    // Handle sizes properly
+    let sizesArray = req.body.sizes;
+    if (typeof sizesArray === 'string') {
+        sizesArray = sizesArray.split(',').filter(size => size.trim());
+    }
+
     //updating the data
     const product = await Product.findByIdAndUpdate(
         productExistance._id,
         {
             $set: {
-                name, productId, description, price, discount, type, category, sizes, stock, images: imageUrls
+                name: req.body.name, 
+                productId: req.body.productId, 
+                description: req.body.description, 
+                price: req.body.price, 
+                discount: req.body.discount, 
+                type: req.body.type, 
+                category: req.body.category, 
+                sizes: sizesArray, 
+                stock: req.body.stock, 
+                images: imageUrls
             }
         },
         { new: true }

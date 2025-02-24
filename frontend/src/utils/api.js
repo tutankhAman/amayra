@@ -96,9 +96,21 @@ export const productService = {
   getAll: (params) => get('/product', params),
   getById: (id) => get(`/product/${id}`),
   search: (params) => get('/product/search', params),
-  create: (formData) => post('/product/create-product', formData),
-  update: (id, formData) => put(`/product/update/${id}`, formData),
-  delete: (id) => del(`/product/delete/${id}`)
+  create: (formData) => {
+    return api.post('/product/create-product', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+  update: (productId, formData) => {
+    return api.put(`/product/update/${productId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+  delete: (productId) => del(`/product/delete/${productId}`)
 };
 
 // Shopping cart management

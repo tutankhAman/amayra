@@ -36,7 +36,7 @@ const Admin = () => {
 
   // Check if we have valid data
   const hasData = salesData && Object.keys(salesData).length > 0;
-  console.log('Processed Sales Data:', salesData);
+  // console.log('Processed Sales Data:', salesData);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', {

@@ -13,7 +13,7 @@ import Profile from '../pages/Profile';
 import Wishlist from '../pages/Wishlist';
 import Orders from '../pages/Orders';
 import AdminOrders from '../pages/AdminOrders';
-// import AdminProducts from '../pages/AdminProducts';
+import AdminProducts from '../pages/AdminProducts';
 
 const AppRoutes = () => {
     const { user } = useUser();
@@ -32,7 +32,7 @@ const AppRoutes = () => {
             <Route path="/order/all" element={
                 user?.role === 'admin' ? <AdminOrders /> : <NotFound />
             } />
-            {/* <Route path="/admin/products" element={<AdminProducts />} />  */}
+            <Route path="/admin/products" element={<AdminProducts />} /> 
             <Route path="*" element={<NotFound />} />
         </Routes>
     );
