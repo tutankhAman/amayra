@@ -61,16 +61,28 @@ const AdminProducts = () => {
     e.preventDefault();
     try {
       const form = new FormData();
+      
+      // Add all non-file fields
       Object.keys(formData).forEach(key => {
         if (key === 'images') {
-          formData.images.forEach(image => form.append('images', image));
+          // Skip images array here, we'll handle files separately
+          return;
         } else if (key === 'sizes') {
-          // Convert sizes array to string before appending
           form.append('sizes', formData.sizes.join(','));
         } else {
           form.append(key, formData[key]);
         }
       });
+
+      // Add image files if any new ones were selected
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach(image => {
+          form.append('images', image);
+        });
+      } else {
+        // If no new images, send empty array to keep existing images
+        form.append('images', '[]');
+      }
 
       await productService.update(editProduct.productId, form);
       setOpenDialog(false);
@@ -84,12 +96,20 @@ const AdminProducts = () => {
 
   const handleDelete = async () => {
     try {
+      if (!deleteId) {
+        showAlert('Product ID is required', 'error');
+        return;
+      }
+      
+      console.log('Deleting product with ID:', deleteId);
       await productService.delete(deleteId);
       setOpenDeleteDialog(false);
+      setDeleteId(null);
       showAlert('Product deleted successfully', 'success');
       fetchProducts();
     } catch (error) {
-      showAlert('Error deleting product', 'error');
+      console.error('Delete error:', error);
+      showAlert(error?.response?.data?.message || 'Error deleting product', 'error');
     }
   };
 
@@ -177,6 +197,7 @@ const AdminProducts = () => {
                   </IconButton>
                   <IconButton 
                     onClick={() => {
+                      console.log('Setting delete ID:', product.productId);
                       setDeleteId(product.productId);
                       setOpenDeleteDialog(true);
                     }}
@@ -541,14 +562,32 @@ const AdminProducts = () => {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={openDeleteDialog} onClose={() => setOpenDeleteDialog(false)}>
+      <Dialog open={openDeleteDialog} onClose={() => {
+        setOpenDeleteDialog(false);
+        setDeleteId(null);
+      }}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this product?
+          <Typography>
+            Are you sure you want to delete this product? This action cannot be undone.
+          </Typography>
+          <Typography color="error" sx={{ mt: 1 }}>
+            Product ID: {deleteId}
+          </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={handleDelete} color="error" variant="contained">
+          <Button onClick={() => {
+            setOpenDeleteDialog(false);
+            setDeleteId(null);
+          }}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDelete} 
+            color="error" 
+            variant="contained"
+            disabled={!deleteId}
+          >
             Delete
           </Button>
         </DialogActions>

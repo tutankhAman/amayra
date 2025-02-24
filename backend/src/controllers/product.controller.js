@@ -169,26 +169,25 @@ const updateProduct = asyncHandler(async (req, res) => {
     }
 
     //file update logic
-    let imageUrls = [...productExistance.images]
+    let imageUrls = [...productExistance.images];
 
-    if (req.files && req.files.images && req.files.images.length > 0) {
-        imageUrls = []  // Reset if uploading new images
-
-        for (const file of req.files.images) {
-            const uploadResult = await uploadOnCloudinary(file.path)
-            if (uploadResult && uploadResult.url) {
-                imageUrls.push(uploadResult.url)
+    if (req.files && req.files.length > 0) {
+        // Delete old images from cloudinary first
+        for (const oldImageUrl of productExistance.images) {
+            try {
+                const publicId = oldImageUrl.split("/").pop().split(".")[0];
+                await deleteFromCloudinary(publicId);
+            } catch (error) {
+                console.error("Error deleting old image:", error);
             }
         }
 
-        if (imageUrls.length > 0 && productExistance.images.length > 0) {
-            for (const oldImageUrl of productExistance.images) {
-                try {
-                    const publicId = oldImageUrl.split("/").pop().split(".")[0]
-                    await deleteFromCloudinary(publicId)
-                } catch (error) {
-                    console.error("Error deleting old image:", error)
-                }
+        // Upload new images
+        imageUrls = [];
+        for (const file of req.files) {
+            const uploadResult = await uploadOnCloudinary(file.path);
+            if (uploadResult && uploadResult.url) {
+                imageUrls.push(uploadResult.url);
             }
         }
     }
@@ -220,39 +219,42 @@ const updateProduct = asyncHandler(async (req, res) => {
     )
 
     //returning updated data
-    res.status(200).json(new apiResponse(200, product, "Product Updated Succesfully"))
+    res.status(200).json(new apiResponse(200, product, "Product Updated Successfully"))
 })
 
 const deleteProduct = asyncHandler(async (req, res) => {
     try {
-        //extract product id
-        const { productId } = req.params
+        const { productId } = req.params;
 
-        //check if product exists
-        const product = await Product.findOne({ productId })
+        const product = await Product.findOne({ productId });
 
         if (!product) {
-            throw new apiError(404, `product with the id ${productId}doesn't exists`)
+            throw new apiError(404, `Product with id ${productId} doesn't exist`);
         }
 
-        //delete images from cloudinary
-        for (image of product.images) {
-            const publicId = image.split("/").pop().split(".")[0];
-            await deleteFromCloudinary(publicId)
+        // Delete images from cloudinary
+        for (const image of product.images) {
+            try {
+                const publicId = image.split("/").pop().split(".")[0];
+                await deleteFromCloudinary(publicId);
+            } catch (error) {
+                console.error("Error deleting image:", error);
+            }
         }
 
-        //delete product from db
-        const productDeletion = await Product.findOneAndDelete({ productId })
+        const productDeletion = await Product.findOneAndDelete({ productId });
 
         if (!productDeletion) {
-            throw new apiError(500, "Failed to delete product")
+            throw new apiError(500, "Failed to delete product");
         }
-        //return success response
-        res.status(200).json(new apiResponse(200, productDeletion, "Product deleted succesfully"))
+
+        res.status(200).json(
+            new apiResponse(200, productDeletion, "Product deleted successfully")
+        );
     } catch (error) {
-        throw new apiError(400, error?.message || "Something went wrong while deleting the product")
+        throw new apiError(400, error?.message || "Something went wrong while deleting the product");
     }
-})
+});
 
 const searchProduct = asyncHandler(async (req, res) => {
     try {
