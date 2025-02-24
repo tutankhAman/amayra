@@ -167,10 +167,39 @@ const cancelOrder = asyncHandler(async (req, res) => {
     );
 });
 
+const getAllOrders = asyncHandler(async (req, res) => {
+    try {
+        console.log("Fetching all orders...");
+        
+        const orders = await Order.find()
+            .populate({
+                path: "items.product",
+                select: "name productId images price"
+            })
+            .populate({
+                path: "user",
+                select: "name email phone"
+            })
+            .sort("-createdAt")
+            .lean(); // Add lean() for better performance
+
+        console.log(`Found ${orders.length} orders`);
+
+        return res.status(200).json(
+            new apiResponse(200, orders, "All orders fetched successfully")
+        );
+
+    } catch (error) {
+        console.error("Error in getAllOrders:", error);
+        throw new apiError(500, error?.message || "Error fetching orders");
+    }
+});
+
 export {
     createOrder,
     getUserOrders,
     getOrderById,
     updateOrderStatus,
-    cancelOrder
+    cancelOrder,
+    getAllOrders  // Add this to exports
 };

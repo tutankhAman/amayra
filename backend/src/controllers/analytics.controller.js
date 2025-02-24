@@ -7,27 +7,37 @@ import mongoose from "mongoose";
 
 // Helper function to create date filter
 const getDateFilter = (startDate, endDate) => {
-    if (!startDate || !endDate) return {};
+    if (!startDate || !endDate) {
+        // Default to last 30 days if no dates provided
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - 30);
+        return {
+            createdAt: {
+                $gte: start,
+                $lte: end
+            }
+        };
+    }
     return {
         createdAt: {
             $gte: new Date(startDate),
-            $lte: new Date(endDate)
+            $lte: new Date(new Date(endDate).setHours(23, 59, 59))
         }
     };
 };
 
 // Get overall sales summary
 const getOverallSales = async (dateFilter) => {
+    // console.log("Getting sales with filter:", dateFilter);
     const totalSales = await Order.aggregate([
         { 
-            //order status filter
             $match: { 
-                orderStatus: "Completed", 
-                ...dateFilter 
+                ...dateFilter,
+                orderStatus: { $exists: true } // Changed this to catch all orders initially
             } 
         },
         {
-            //combining matched orders into single result
             $group: {
                 _id: null,
                 totalRevenue: { $sum: "$totalPrice" },
@@ -37,6 +47,7 @@ const getOverallSales = async (dateFilter) => {
         }
     ]);
 
+    // console.log("Raw sales data:", totalSales);
     return totalSales[0] || { 
         totalRevenue: 0, 
         totalOrders: 0, 
@@ -49,59 +60,58 @@ const getDailySales = async (dateFilter) => {
     return Order.aggregate([
         { 
             $match: { 
-                orderStatus: "Completed", 
-                ...dateFilter 
+                ...dateFilter,
+                orderStatus: { $nin: ["Cancelled"] }
             } 
         },
         {
             $group: {
                 _id: { 
-                    //filtering products for a specific date
-                    date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                    date: { 
+                        $dateToString: { 
+                            format: "%Y-%m-%d", 
+                            date: "$createdAt",
+                            timezone: "Asia/Kolkata"  // Add timezone for correct date grouping
+                        } 
+                    }
                 },
                 dailyRevenue: { $sum: "$totalPrice" },
                 numberOfOrders: { $sum: 1 }
             }
         },
-        { $sort: { "_id.date": 1 } }
+        { 
+            $sort: { "_id.date": 1 } 
+        }
     ]);
 };
 
 // Get top selling products
-const getTopProducts = async (dateFilter, limit = 10) => {
+const getTopProducts = async (dateFilter, limit = 5) => {  // Reduced limit for better visibility
     return Order.aggregate([
         { 
-            $match: { 
-                orderStatus: "Completed", 
-                ...dateFilter 
-            } 
+            $match: dateFilter 
         },
-        { $unwind: "$products" },
-        {
-            $group: {
-                _id: "$products.product",
-                totalQuantitySold: { $sum: "$products.quantity" },
-                totalProductRevenue: { 
-                    $sum: { 
-                        $multiply: ["$products.quantity", "$products.price"] 
-                    } 
-                }
-            }
-        },
+        { $unwind: "$items" },  // Using items instead of products
         {
             $lookup: {
                 from: "products",
-                localField: "_id",
+                localField: "items.product",  // Changed to match order model
                 foreignField: "_id",
                 as: "productDetails"
             }
         },
         { $unwind: "$productDetails" },
         {
-            $project: {
-                productName: "$productDetails.name",
-                totalQuantitySold: 1,
-                totalProductRevenue: 1
+            $group: {
+                _id: "$items.product",
+                productId: { $first: "$productDetails.productId" }, // Added productId
+                productName: { $first: "$productDetails.name" },
+                totalQuantitySold: { $sum: "$items.quantity" },
+                totalProductRevenue: { 
+                    $sum: { 
+                        $multiply: ["$items.quantity", "$items.price"] 
+                    } 
+                }
             }
         },
         { $sort: { totalQuantitySold: -1 } },
@@ -111,21 +121,37 @@ const getTopProducts = async (dateFilter, limit = 10) => {
 
 // Get order status distribution
 const getOrderStatusDistribution = async (dateFilter) => {
-    return Order.aggregate([
+    const result = await Order.aggregate([
         { $match: dateFilter },
         {
             $group: {
                 _id: "$orderStatus",
                 totalOrders: { $sum: 1 }
             }
+        },
+        { 
+            $sort: { 
+                "_id": 1 
+            } 
         }
     ]);
+    // console.log("Order Status Distribution:", result); // Debug log
+    return result;
 };
 
 // Main analytics controller
 const getSalesAnalytics = asyncHandler(async (req, res) => {
     try {
+        // First, verify we have orders
+        const orderCount = await Order.countDocuments({});
+        console.log("Total orders in database:", orderCount);
+
         const dateFilter = getDateFilter(req.query.startDate, req.query.endDate);
+        console.log("Using date filter:", dateFilter);
+
+        // Get a sample order to verify structure
+        const sampleOrder = await Order.findOne({}).lean();
+        console.log("Sample order structure:", JSON.stringify(sampleOrder, null, 2));
 
         const [overview, dailySales, topProducts, orderStatus] = await Promise.all([
             getOverallSales(dateFilter),
@@ -136,20 +162,29 @@ const getSalesAnalytics = asyncHandler(async (req, res) => {
 
         const analytics = {
             overview,
-            dailySales,
-            topProducts,
-            orderStatus
+            dailySales: dailySales.length ? dailySales : [{ 
+                _id: { date: new Date().toISOString().split('T')[0] },
+                dailyRevenue: 0,
+                numberOfOrders: 0
+            }],
+            topProducts: topProducts.length ? topProducts : [],
+            orderStatus: orderStatus.length ? orderStatus : [
+                { _id: "Pending", totalOrders: 0 },
+                { _id: "Processing", totalOrders: 0 },
+                { _id: "Completed", totalOrders: 0 },
+                { _id: "Cancelled", totalOrders: 0 }
+            ]
         };
 
-        res.status(200).json(
+        console.log("Final analytics:", JSON.stringify(analytics, null, 2));
+
+        return res.status(200).json(
             new apiResponse(200, analytics, "Analytics fetched successfully")
         );
 
     } catch (error) {
-        throw new apiError(
-            500, 
-            error?.message || "Failed to fetch analytics"
-        );
+        console.error("Analytics Error:", error);
+        throw new apiError(500, error?.message || "Failed to fetch analytics");
     }
 });
 

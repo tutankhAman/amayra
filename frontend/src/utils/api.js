@@ -32,7 +32,11 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (!error.response || error.response.status !== 401) {
-      console.error('API Error:', error.response?.data?.message || 'An error occurred');
+      console.error('API Error:', {
+        status: error.response?.status,
+        message: error.response?.data?.message || 'An error occurred',
+        url: error.config?.url
+      });
     }
     return Promise.reject(error);
   }
@@ -127,14 +131,21 @@ export const orderService = {
   create: () => post('/order/create'),
   getUserOrders: () => get('/order/user-orders'),
   getById: (id) => get(`/order/${id}`),
-  updateStatus: (orderId, data) => put(`/order/${orderId}/status`, data),
-  cancelOrder: (orderId) => patch(`/order/${orderId}/cancel`)
+  updateStatus: (orderId, data) => patch(`/order/${orderId}/status`, data), // Changed from put to patch
+  cancelOrder: (orderId) => patch(`/order/${orderId}/cancel`),
+  getAll: () => {
+    console.log('Fetching all orders...');
+    return get('/order/all').catch(error => {
+      console.error('Error fetching orders:', error);
+      throw error;
+    });
+  }
 };
 
 // Analytics and reporting
 export const analyticsService = {
-  getSales: () => get('/analytics'),
-  getProduct: (productId) => post(`/analytics/product/${productId}`),
+  getSales: (params) => get('/analytics', params),  // Added params for date range
+  getProduct: (productId, params) => get(`/analytics/product/${productId}`, params), // Changed from POST to GET
   getTopProducts: () => get('/analytics/top-products')
 };
 

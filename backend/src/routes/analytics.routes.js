@@ -8,8 +8,8 @@ import {
 
 const router = Router();
 
-router.route("/").get(verifyJWT, getSalesAnalytics)
-router.route("/product/:productId").post(verifyJWT, getProductAnalytics)
+router.route("/").get(verifyJWT, getSalesAnalytics);
+router.route("/product/:productId").get(verifyJWT, getProductAnalytics); // Changed from post to get
 router.route("/top-products").get(getTop3Products)
 
 export default router;

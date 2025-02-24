@@ -6,19 +6,20 @@ import {
     getUserOrders, 
     getOrderById, 
     updateOrderStatus,
-    cancelOrder 
+    cancelOrder,
+    getAllOrders 
 } from "../controllers/order.controller.js"
 
 const router = Router();
 
+// Admin routes first to prevent parameter conflicts
+router.get("/all", verifyJWT, adminAuth, getAllOrders);
+router.patch("/:orderId/status", verifyJWT, adminAuth, updateOrderStatus);
 
 // User routes
 router.post("/create", verifyJWT, createOrder);
 router.patch("/:orderId/cancel", verifyJWT, cancelOrder);
 router.get("/user-orders", verifyJWT, getUserOrders);
 router.get("/:orderId", verifyJWT, getOrderById);
-
-// Admin routes
-router.patch("/:orderId/status", verifyJWT, adminAuth, updateOrderStatus);
 
 export default router;
