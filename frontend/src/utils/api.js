@@ -5,7 +5,7 @@ const API_URL = 'http://localhost:8000/api/v1';
 const api = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'multipart/form-data'
+    'Content-Type': 'application/json' // Default to JSON
   },
   withCredentials: true
 });
@@ -18,6 +18,11 @@ const hasAuthCookie = () => {
 // Add auth check for protected routes
 api.interceptors.request.use(
   (config) => {
+    // Set content type to multipart/form-data only for file uploads
+    if (config.data instanceof FormData) {
+      config.headers['Content-Type'] = 'multipart/form-data';
+    }
+    
     const publicPaths = ['/users/login', '/users/register'];
     if (publicPaths.some(path => config.url?.includes(path))) return config;
     
@@ -31,13 +36,25 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => response,
   error => {
-    console.error('API Error Details:', {
+    const errorDetails = {
       status: error.response?.status,
-      message: error.response?.data?.message,
+      message: error.response?.data?.message || error.response?.data,
       data: error.response?.data,
       url: error.config?.url,
       method: error.config?.method,
-    });
+    };
+
+    // Log error details for debugging
+    console.error('API Error Details:', errorDetails);
+
+    // Handle 500 errors specially
+    if (error.response?.status === 500) {
+      return Promise.reject({
+        ...error,
+        message: 'Internal server error. Please try again later.'
+      });
+    }
+
     return Promise.reject(error);
   }
 );

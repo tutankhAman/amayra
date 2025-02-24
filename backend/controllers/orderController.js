@@ -9,6 +9,7 @@ const createOrder = asyncHandler(async (req, res) => {
     try {
         const userId = req.user._id;
 
+        // Get cart and populate product details
         const cart = await Cart.findOne({ user: userId })
             .populate('items.product');
 
@@ -19,13 +20,13 @@ const createOrder = asyncHandler(async (req, res) => {
         // Validate items and calculate totals
         let subtotal = 0;
         const orderItems = cart.items.map(item => {
-            const itemTotal = item.quantity * item.product.sellingPrice;
+            const itemTotal = item.quantity * item.product.sellingPrice; // Use sellingPrice instead of price
             subtotal += itemTotal;
             
             return {
                 product: item.product._id,
                 quantity: item.quantity,
-                price: item.product.sellingPrice,
+                price: item.product.sellingPrice, // Use sellingPrice instead of price
                 size: item.size
             };
         });
@@ -35,7 +36,7 @@ const createOrder = asyncHandler(async (req, res) => {
             user: userId,
             items: orderItems,
             subtotal,
-            totalPrice: subtotal
+            totalPrice: subtotal // Add any additional charges here if needed
         });
 
         // Clear the cart
@@ -44,32 +45,19 @@ const createOrder = asyncHandler(async (req, res) => {
             { $set: { items: [], totalPrice: 0 } }
         );
 
-        // Get populated order data - Update populate to include productId
+        // Get the populated order for email and response
         const populatedOrder = await Order.findById(order._id)
-            .populate('items.product', 'name productId images price sellingPrice')
+            .populate('items.product', 'name images price')
             .populate('user', 'name email')
             .lean();
 
-        // Log data for debugging
-        console.log('Populated Order Items:', JSON.stringify(populatedOrder.items, null, 2));
-
-        // Send email notification with correct product data mapping
-        try {
-            await sendOrderNotification({
-                orderId: order._id,
-                customerName: populatedOrder.user.name,
-                totalAmount: populatedOrder.totalPrice,
-                items: populatedOrder.items.map(item => ({
-                    productId: item.product.productId,  // Make sure this exists in populated data
-                    quantity: item.quantity,
-                    size: item.size,
-                    price: item.product.sellingPrice || item.price // Use sellingPrice if available
-                }))
-            });
-            console.log('Order notification email sent successfully');
-        } catch (emailError) {
-            console.error('Failed to send order email:', emailError);
-        }
+        // Send email notification
+        await sendOrderNotification({
+            orderId: order._id,
+            customerName: populatedOrder.user.name,
+            totalAmount: populatedOrder.totalPrice,
+            items: populatedOrder.items
+        });
 
         return res.status(201).json(
             new apiResponse(201, populatedOrder, "Order created successfully")
@@ -84,6 +72,7 @@ const createOrder = asyncHandler(async (req, res) => {
 const getUserOrders = asyncHandler(async (req, res) => {
     try {
         const userId = req.user._id;
+        
         const orders = await Order.find({ user: userId })
             .populate({
                 path: "items.product",
@@ -104,6 +93,7 @@ const getOrderById = asyncHandler(async (req, res) => {
     try {
         const { orderId } = req.params;
         const userId = req.user._id;
+
         const order = await Order.findOne({
             _id: orderId,
             user: userId
@@ -127,24 +117,28 @@ const getOrderById = asyncHandler(async (req, res) => {
 
 const updateOrderStatus = asyncHandler(async (req, res) => {
     try {
+        //get orderid, orderstatus and admin notes
         const { orderId } = req.params;
         const { orderStatus, adminNotes } = req.body;
 
+        //order status check
         if (!["Pending", "Ready for Pickup", "Completed", "Cancelled"].includes(orderStatus)) {
             throw new apiError(400, "Invalid order status");
         }
 
+        //find and update the order
         const order = await Order.findByIdAndUpdate(
             orderId,
             {
                 orderStatus,
                 adminNotes: adminNotes || "",
-                isPaid: orderStatus === "Completed" ? true : false,
+                isPaid: orderStatus === "Completed" ? true : false, // Mark as paid when completed
                 paymentStatus: orderStatus === "Completed" ? "Paid" : "Pending"
             },
             { new: true }
         );
 
+        
         if (!order) {
             throw new apiError(404, "Order not found");
         }
@@ -186,6 +180,7 @@ const cancelOrder = asyncHandler(async (req, res) => {
 const getAllOrders = asyncHandler(async (req, res) => {
     try {
         console.log("Fetching all orders...");
+        
         const orders = await Order.find()
             .populate({
                 path: "items.product",
@@ -196,9 +191,10 @@ const getAllOrders = asyncHandler(async (req, res) => {
                 select: "name email phone"
             })
             .sort("-createdAt")
-            .lean();
+            .lean(); // Add lean() for better performance
 
         console.log(`Found ${orders.length} orders`);
+
         return res.status(200).json(
             new apiResponse(200, orders, "All orders fetched successfully")
         );
@@ -215,5 +211,5 @@ export {
     getOrderById,
     updateOrderStatus,
     cancelOrder,
-    getAllOrders
+    getAllOrders  // Add this to exports
 };
