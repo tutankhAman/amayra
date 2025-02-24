@@ -4,7 +4,6 @@ import { userService } from '../utils/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import profileCover from '../assets/images/profile-cover2.jpg';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -310,7 +309,7 @@ const Profile = () => {
             <div className="bg-white rounded-2xl  shadow-sm overflow-hidden">
               <div className="w-full h-48">
                 <img
-                  src={profileCover}
+                  src="https://res.cloudinary.com/dh0xbfq7w/image/upload/f_auto,q_auto/v1/website%20assets/n7n9v4gbs1jzjegcf6jg"
                   alt="Profile Cover"
                   className="w-full h-full object-cover"
                 />

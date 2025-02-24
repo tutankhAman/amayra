@@ -3,7 +3,6 @@ import { FiMail, FiLock, FiArrowRight, FiUser, FiPhone, FiEye, FiEyeOff } from '
 import { useUser } from '../context/UserContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
-import loginCover from '../assets/images/login-cover.jpg';
 
 const SignUp = () => {
   const [formData, setFormData] = useState({
@@ -68,7 +67,7 @@ const SignUp = () => {
         <div 
           className="absolute inset-0 w-full h-full z-0"
           style={{
-            backgroundImage: `url(${loginCover})`,
+            backgroundImage: `url('https://res.cloudinary.com/dh0xbfq7w/image/upload/f_auto,q_auto/v1/website%20assets/hwr60qewkvf98ulpocxr')`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
           }}
@@ -191,7 +190,7 @@ const SignUp = () => {
         <div className="hidden lg:block lg:w-[45%]">
           <div className="p-6">
             <img
-              src={loginCover}
+              src="https://res.cloudinary.com/dh0xbfq7w/image/upload/f_auto,q_auto/v1/website%20assets/hwr60qewkvf98ulpocxr"
               alt="Signup Cover"
               className="object-cover w-full rounded-xl"
             />
