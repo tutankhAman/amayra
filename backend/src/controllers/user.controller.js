@@ -68,7 +68,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite:"None"
     };
 
     // Return response with cookies set
@@ -120,7 +121,8 @@ const loginUser = asyncHandler(async (req, res) => {
     //additional security
     const options = {
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite:"None"
     }
 
     //send cookie
@@ -152,6 +154,7 @@ const logoutUser = asyncHandler(async(req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
+        sameSite:"None",
         path: '/'  // Add path to ensure cookies are cleared properly
     };
     
