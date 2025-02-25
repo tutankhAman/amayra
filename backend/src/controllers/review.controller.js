@@ -60,18 +60,27 @@ const getReview = asyncHandler(async (req, res) => {
         throw new apiError(404, `Product with productId ${productId} doesn't exist`);
     }
     
-    // Fetch reviews and populate user details
+    // Fetch reviews and populate user details, handling deleted users
     const productReviews = await Review.find({ product: product._id })
         .populate('user', 'name avatar')
         .sort({ createdAt: -1 });
 
-    // Map reviews and add isOwner flag
+    // Map reviews and handle deleted users
     const reviewsWithOwnership = productReviews.map(review => {
         const reviewObj = review.toObject();
-        return {
-            ...reviewObj,
-            isOwner: userId ? reviewObj.user._id.toString() === userId.toString() : false
-        };
+        
+        // Handle deleted users
+        if (review.isDeletedUser || !reviewObj.user) {
+            reviewObj.user = {
+                name: 'Deleted User',
+                avatar: '/default-avatar.png'
+            };
+            reviewObj.isOwner = false;
+        } else {
+            reviewObj.isOwner = userId ? reviewObj.user._id.toString() === userId.toString() : false;
+        }
+
+        return reviewObj;
     });
 
     res.status(200).json(
@@ -88,6 +97,11 @@ const deleteReview = asyncHandler(async (req, res) => {
     const review = await Review.findById(reviewId);
     if (!review) {
         throw new apiError(404, "Review not found");
+    }
+
+    // Check if review is from a deleted user
+    if (review.isDeletedUser) {
+        throw new apiError(410, "This review belongs to a deleted user account");
     }
 
     // Check if the user is the owner of the review
@@ -125,6 +139,11 @@ const updateReview = asyncHandler(async (req, res) => {
     const review = await Review.findById(reviewId);
     if (!review) {
         throw new apiError(404, "Review not found");
+    }
+
+    // Check if review is from a deleted user
+    if (review.isDeletedUser) {
+        throw new apiError(410, "This review belongs to a deleted user account");
     }
 
     // Check if the user is the owner of the review
