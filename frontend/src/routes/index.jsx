@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useUser } from '../context/UserContext';
 import Shop from '../pages/Shop';
 import Home from '../pages/Home';
@@ -17,31 +17,54 @@ import AdminProducts from '../pages/AdminProducts';
 import PrivateRoute from '../components/PrivateRoute';
 
 const AppRoutes = () => {
-    const { user } = useUser();
+    const { user, loading } = useUser();
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <Routes>
             <Route path="/" element={user?.role === 'admin' ? <Admin /> : <Home />} />
             <Route path="/shop" element={<Shop />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/cart" element={
-                <PrivateRoute>
-                    <Cart />
-                </PrivateRoute>
-            } />
-            <Route path="/profile" element={<Profile/>} />
-            <Route path='/wishlist' element={
-                <PrivateRoute>
-                    <Wishlist />
-                </PrivateRoute>
-            } />
-            <Route path='/orders' element={<Orders />} />
+            
+            {/* Public routes - redirect to home if already logged in */}
+            <Route 
+                path="/login" 
+                element={!user ? <Login /> : <Navigate to="/" replace />} 
+            />
+            <Route 
+                path="/signup" 
+                element={!user ? <SignUp /> : <Navigate to="/" replace />} 
+            />
+            
+            {/* Protected routes */}
+            <Route path="/cart" element={<PrivateRoute><Cart /></PrivateRoute>} />
+            <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
+            <Route path="/wishlist" element={<PrivateRoute><Wishlist /></PrivateRoute>} />
+            <Route path="/orders" element={<PrivateRoute><Orders /></PrivateRoute>} />
+            
+            {/* Public routes */}
             <Route path="/product/:id" element={<Product />} />
-            <Route path="/order/all" element={
-                user?.role === 'admin' ? <AdminOrders /> : <NotFound />
-            } />
-            <Route path="/admin/products" element={<AdminProducts />} /> 
+            
+            {/* Admin routes */}
+            <Route 
+                path="/order/all" 
+                element={
+                    <PrivateRoute>
+                        {user?.role === 'admin' ? <AdminOrders /> : <NotFound />}
+                    </PrivateRoute>
+                } 
+            />
+            <Route 
+                path="/admin/products" 
+                element={
+                    <PrivateRoute>
+                        {user?.role === 'admin' ? <AdminProducts /> : <NotFound />}
+                    </PrivateRoute>
+                } 
+            />
+            
             <Route path="*" element={<NotFound />} />
         </Routes>
     );
