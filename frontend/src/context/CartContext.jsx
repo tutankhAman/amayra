@@ -20,7 +20,7 @@ export const CartProvider = ({ children }) => {
     const handleError = (error) => {
         setError(error);
         console.error('Cart error:', error);
-        toast.error(error.response?.data?.message || 'Operation failed');
+        // toast.error(error.response?.data?.message || 'Operation failed');
     };
 
     // Fetch cart on mount with cleanup
@@ -58,7 +58,7 @@ export const CartProvider = ({ children }) => {
             setLoading(true);
             const response = await cartService.add({ productId, quantity, size });
             setCart(response.data.data);
-            toast.success('Item added to cart');
+            // toast.success('Item added to cart');
         } catch (error) {
             handleError(error);
         } finally {
@@ -80,7 +80,7 @@ export const CartProvider = ({ children }) => {
             const updatedCart = response.data.data;
             setCart(updatedCart);
             
-            toast.success('Cart updated');
+            // toast.success('Cart updated');
         } catch (error) {
             handleError(error);
             // Refresh cart to ensure consistent state
@@ -97,7 +97,7 @@ export const CartProvider = ({ children }) => {
             setLoading(true);
             const response = await cartService.remove({ productId, size });
             setCart(response.data.data);
-            toast.success('Item removed from cart');
+            // toast.success('Item removed from cart');
         } catch (error) {
             handleError(error);
         } finally {
@@ -111,7 +111,7 @@ export const CartProvider = ({ children }) => {
             setLoading(true);
             const response = await cartService.clear();
             setCart(response.data.data);
-            toast.success('Cart cleared');
+            // toast.success('Cart cleared');
         } catch (error) {
             handleError(error);
         } finally {

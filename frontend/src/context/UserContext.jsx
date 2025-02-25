@@ -46,7 +46,7 @@ export const UserProvider = ({ children }) => {
     try {
       await apiClient.userService.login(credentials);
       await checkAuthStatus();
-      toast.success('Logged in successfully');
+      // toast.success('Logged in successfully');
       navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');
@@ -96,7 +96,7 @@ export const UserProvider = ({ children }) => {
       // Clear auth cookies
       document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      toast.success('Logged out successfully');
+      // toast.success('Logged out successfully');
       navigate('/login');
     } catch (error) {
       toast.error('Error logging out');
