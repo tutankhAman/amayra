@@ -6,7 +6,7 @@ const OrderSuccessModal = ({ isOpen, onClose, orderId }) => {
     const storeInfo = {
         address: "Amayra Ethnic Collections, Near Ramzan Pull, infront of Haider Nursing Home, Churipatti Road, Kishanganj, Bihar - 855108",
         timings: "10:00 AM - 9:00 PM (Monday to Sunday)",
-        contact: "+91 9876543210"
+        contact: "+91 88024 86365"
     };
 
     if (!isOpen) return null;
