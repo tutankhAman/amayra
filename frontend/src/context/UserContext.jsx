@@ -91,15 +91,22 @@ export const UserProvider = ({ children }) => {
   const logout = async () => {
     setAuthLoading(true);
     try {
-      await apiClient.userService.logout();
+      await apiClient.userService.logout(); // This will clear both cookies and localStorage
       setUser(null);
-      // Clear auth cookies
+      
+      // Ensure all auth data is cleared
       document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
       document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
-      // toast.success('Logged out successfully');
+      localStorage.removeItem('authTokens'); // Clear localStorage tokens
+      
       navigate('/login');
     } catch (error) {
-      toast.error('Error logging out');
+      // Even if API call fails, clear local auth data
+      setUser(null);
+      document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";
+      localStorage.removeItem('authTokens');
+      toast.error('Error during logout, but session was cleared');
     } finally {
       setAuthLoading(false);
     }

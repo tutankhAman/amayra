@@ -56,6 +56,25 @@ userSchema.pre("save", async function (next){
     next()
 })
 
+userSchema.pre('remove', async function(next) {
+    try {
+        // Update all reviews by this user to mark them as from a deleted user
+        await Review.updateMany(
+            { user: this._id },
+            { 
+                $set: {
+                    isDeletedUser: true,
+                    'user.name': 'Deleted User',
+                    'user.avatar': '/default-avatar.png'
+                }
+            }
+        );
+        next();
+    } catch (error) {
+        next(error);
+    }
+});
+
 userSchema.methods.isPasswordCorrect = async function(password){
     return await bcrypt.compare(password, this.password)
 }

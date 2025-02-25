@@ -10,9 +10,32 @@ const api = axios.create({
   withCredentials: true
 });
 
-// Check for auth token in cookies
-const hasAuthCookie = () => {
-  return document.cookie.includes('accessToken=');
+// Token management utilities
+const TOKEN_KEY = 'authTokens';
+
+const tokenStorage = {
+  get: () => {
+    try {
+      return JSON.parse(localStorage.getItem(TOKEN_KEY));
+    } catch (e) {
+      return null;
+    }
+  },
+  set: (tokens) => {
+    localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens));
+  },
+  clear: () => {
+    localStorage.removeItem(TOKEN_KEY);
+  }
+};
+
+// Check for auth from either cookies or localStorage
+const getAuthToken = () => {
+  const hasToken = document.cookie.includes('accessToken=');
+  if (hasToken) return true;
+  
+  const localTokens = tokenStorage.get();
+  return !!localTokens?.accessToken;
 };
 
 // Add auth check for protected routes
@@ -26,7 +49,13 @@ api.interceptors.request.use(
     const publicPaths = ['/users/login', '/users/register'];
     if (publicPaths.some(path => config.url?.includes(path))) return config;
     
-    if (hasAuthCookie()) config.headers['has-auth'] = 'true';
+    // Try localStorage tokens if cookies aren't present
+    const localTokens = tokenStorage.get();
+    if (localTokens?.accessToken) {
+      config.headers['Authorization'] = `Bearer ${localTokens.accessToken}`;
+    }
+    
+    if (getAuthToken()) config.headers['has-auth'] = 'true';
     return config;
   },
   (error) => Promise.reject(error)
@@ -109,8 +138,21 @@ export const analyticsService = {
 
 export const userService = {
   register: (userData) => apiMethods.post('/users/register', userData),
-  login: (data) => apiMethods.post('/users/login', data),
-  logout: () => apiMethods.post('/users/logout'),
+  login: async (data) => {
+    const response = await apiMethods.post('/users/login', data);
+    if (response.data?.data?.accessToken) {
+      tokenStorage.set({
+        accessToken: response.data.data.accessToken,
+        refreshToken: response.data.data.refreshToken
+      });
+    }
+    return response;
+  },
+  logout: async () => {
+    const response = await apiMethods.post('/users/logout');
+    tokenStorage.clear();
+    return response;
+  },
   refreshToken: () => apiMethods.post('/users/refresh-token'),
   getCurrentUser: () => apiMethods.get('/users/current-user'),
   changePassword: (data) => apiMethods.patch('/users/change-password', data),

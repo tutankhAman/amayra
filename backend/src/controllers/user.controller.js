@@ -91,41 +91,34 @@ const registerUser = asyncHandler(async (req, res) => {
 });
 
 const loginUser = asyncHandler(async (req, res) => {
-    //req body from data
     const { phone, password } = req.body
     if (!phone && !password) {
         throw new apiError(400, "phone no. or password is required")
     }
 
-    //find user in db
+    // Find user and validate password
     const user = await User.findOne({ phone })
-
     if (!user) {
         throw new apiError(404, "User does not exist. Please Register!");
     }
-
-    //passwordcheck
     const isPasswordValid = await user.isPasswordCorrect(password)
-
     if (!isPasswordValid) {
         throw new apiError(401, "Invalid user credentials")
     }
 
-    //access and refresh token
+    // Generate tokens
     const {accessToken, refreshToken} = await generateAccessAndRefreshTokens(user._id)
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
 
-    //remove password and refresh token form response
-    const loggedInUser = await User.findById(user._id)
-    .select("-password -refreshToken")
-
-    //additional security
+    // Set cookie options
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"None"
+        sameSite: "None"
     }
 
-    //send cookie
+    // Send response with both cookies and tokens in body
+    // This allows client to fallback to localStorage if cookies fail
     return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -134,7 +127,9 @@ const loginUser = asyncHandler(async (req, res) => {
         new apiResponse(
             200, 
             {
-                user: loggedInUser, accessToken, refreshToken
+                user: loggedInUser,
+                accessToken,    // Included for localStorage fallback
+                refreshToken    // Included for localStorage fallback
             },
             "User logged in successfully"
         )
@@ -142,6 +137,7 @@ const loginUser = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async(req, res) => {
+    // Clear tokens from database
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -151,18 +147,29 @@ const logoutUser = asyncHandler(async(req, res) => {
         }
     );
 
+    // Cookie clearing options
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
-        path: '/'  // Add path to ensure cookies are cleared properly
+        sameSite: "None",
+        path: '/'
     };
     
+    // Clear both cookies and send response
+    // Client should also clear localStorage on receiving this response
     return res
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(new apiResponse(200, {}, "User logged out successfully"));
+    .json(
+        new apiResponse(
+            200, 
+            {
+                cookiesCleared: true  // Flag for client to clear localStorage
+            }, 
+            "User logged out successfully"
+        )
+    );
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {

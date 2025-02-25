@@ -33,4 +33,10 @@ app.use('/api/v1/reviews', reviewRouter)
 app.use('/api/v1/order', orderRouter)
 app.use('/api/v1/analytics', analyticsRouter)
 
+//server health check
+app.get('/health', (req, res) => {
+    res.status(200).send('Server is running!');
+  });
+  
+
 export { app }

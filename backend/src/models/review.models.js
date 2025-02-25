@@ -20,6 +20,10 @@ const reviewSchema = new mongoose.Schema(
         },
         comment: {
             type: String
+        },
+        isDeletedUser: {
+            type: Boolean,
+            default: false
         }
     },
     {timestamps: true}

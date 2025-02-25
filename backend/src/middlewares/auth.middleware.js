@@ -4,14 +4,22 @@ import jwt from "jsonwebtoken";
 
 export const verifyJWT = asyncHandler(async (req, res, next) => {
     try {
-        const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ", "");
+        // Check cookies first, then Authorization header
+        let token = req.cookies?.accessToken;
+        
+        if (!token) {
+            // Try Authorization header if cookie not found
+            const authHeader = req.header("Authorization");
+            if (authHeader?.startsWith("Bearer ")) {
+                token = authHeader.replace("Bearer ", "");
+            }
+        }
         
         if (!token) {
             throw new Error("Unauthorized request");
         }
         
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
         
         if (!user) {
