@@ -14,6 +14,7 @@ import Wishlist from '../pages/Wishlist';
 import Orders from '../pages/Orders';
 import AdminOrders from '../pages/AdminOrders';
 import AdminProducts from '../pages/AdminProducts';
+import PrivateRoute from '../components/PrivateRoute';
 
 const AppRoutes = () => {
     const { user } = useUser();
@@ -24,9 +25,17 @@ const AppRoutes = () => {
             <Route path="/shop" element={<Shop />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
-            <Route path="/cart" element={<Cart />} />
+            <Route path="/cart" element={
+                <PrivateRoute>
+                    <Cart />
+                </PrivateRoute>
+            } />
             <Route path="/profile" element={<Profile/>} />
-            <Route path='/wishlist' element={<Wishlist />} />
+            <Route path='/wishlist' element={
+                <PrivateRoute>
+                    <Wishlist />
+                </PrivateRoute>
+            } />
             <Route path='/orders' element={<Orders />} />
             <Route path="/product/:id" element={<Product />} />
             <Route path="/order/all" element={

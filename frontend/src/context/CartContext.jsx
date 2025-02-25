@@ -23,42 +23,31 @@ export const CartProvider = ({ children }) => {
         // toast.error(error.response?.data?.message || 'Operation failed');
     };
 
-    // Fetch cart on mount with cleanup
-    useEffect(() => {
-        let mounted = true;
-        
-        const getCart = async () => {
-            try {
-                setLoading(true);
-                const response = await cartService.get();
-                if (mounted) {
-                    setCart(response.data.data);
-                }
-            } catch (error) {
-                if (mounted) {
-                    handleError(error);
-                }
-            } finally {
-                if (mounted) {
-                    setLoading(false);
-                }
-            }
-        };
-
-        getCart();
-
-        return () => {
-            mounted = false;
-        };
+    // Fetch cart data function
+    const fetchCart = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await cartService.get();
+            setCart(response.data.data);
+        } catch (error) {
+            handleError(error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    // Initial cart fetch
+    useEffect(() => {
+        fetchCart();
+    }, [fetchCart]);
 
     // Add item to cart
     const addToCart = async (productId, quantity = 1, size = "Free Size") => {
         try {
             setLoading(true);
-            const response = await cartService.add({ productId, quantity, size });
-            setCart(response.data.data);
-            // toast.success('Item added to cart');
+            await cartService.add({ productId, quantity, size });
+            await fetchCart(); // Fetch updated cart
+            toast.success('Item added to cart');
         } catch (error) {
             handleError(error);
         } finally {
@@ -70,22 +59,12 @@ export const CartProvider = ({ children }) => {
     const updateCartItem = async (productId, quantity, size) => {
         try {
             setLoading(true);
-            const response = await cartService.update({ 
-                productId, 
-                quantity, 
-                size 
-            });
-            
-            // Ensure we get populated product data
-            const updatedCart = response.data.data;
-            setCart(updatedCart);
-            
-            // toast.success('Cart updated');
+            await cartService.update({ productId, quantity, size });
+            await fetchCart(); // Fetch updated cart
+            toast.success('Cart updated');
         } catch (error) {
             handleError(error);
-            // Refresh cart to ensure consistent state
-            const cartResponse = await cartService.get();
-            setCart(cartResponse.data.data);
+            await fetchCart(); // Refresh cart on error
         } finally {
             setLoading(false);
         }
@@ -95,9 +74,9 @@ export const CartProvider = ({ children }) => {
     const removeFromCart = async (productId, size) => {
         try {
             setLoading(true);
-            const response = await cartService.remove({ productId, size });
-            setCart(response.data.data);
-            // toast.success('Item removed from cart');
+            await cartService.remove({ productId, size });
+            await fetchCart(); // Fetch updated cart
+            toast.success('Item removed from cart');
         } catch (error) {
             handleError(error);
         } finally {
@@ -109,9 +88,9 @@ export const CartProvider = ({ children }) => {
     const clearCart = async () => {
         try {
             setLoading(true);
-            const response = await cartService.clear();
-            setCart(response.data.data);
-            // toast.success('Cart cleared');
+            await cartService.clear();
+            await fetchCart(); // Fetch updated cart
+            toast.success('Cart cleared');
         } catch (error) {
             handleError(error);
         } finally {
@@ -138,8 +117,9 @@ export const CartProvider = ({ children }) => {
         updateCartItem,
         removeFromCart,
         clearCart,
-        getCartTotals
-    }), [cart, loading, error]);
+        getCartTotals,
+        fetchCart // Add this
+    }), [cart, loading, error, fetchCart]);
 
     return (
         <CartContext.Provider value={value}>

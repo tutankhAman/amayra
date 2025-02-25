@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { productService, reviewService, userService } from '../utils/api';
 import { FiMinus, FiPlus, FiHeart, FiShare2, FiStar, FiEdit2, FiTrash2, FiMessageCircle } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import ProductCard from '../components/cards/productCard';
 import { useCart } from '../context/CartContext';
+import { useUser } from '../context/UserContext';  // Add this import
 
 const ImageGallery = ({ images }) => {
     const [mainImage, setMainImage] = useState(images?.[0]);
@@ -335,6 +336,8 @@ const ReviewSection = ({ productId, existingReviews = [] }) => {
 };
 
 const Product = () => {
+    const navigate = useNavigate();
+    const { user } = useUser();
     const { id } = useParams(); // Changed from productId to id to match route parameter
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -398,6 +401,11 @@ const Product = () => {
     }, [id]);
 
     const handleAddToCart = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
         if (!selectedSize) {
             toast.error('Please select a size');
             return;
@@ -427,6 +435,11 @@ const Product = () => {
     };
 
     const handleWishlist = async () => {
+        if (!user) {
+            navigate('/login');
+            return;
+        }
+
         if (!product?._id) return;
 
         setWishlistLoading(true);
@@ -444,6 +457,27 @@ const Product = () => {
             toast.error(error.response?.data?.message || 'Failed to update wishlist');
         } finally {
             setWishlistLoading(false);
+        }
+    };
+
+    const handleShare = async () => {
+        const shareData = {
+            title: product?.name,
+            text: product?.description,
+            url: window.location.href
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                toast.success('Shared successfully!');
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success('Link copied to clipboard!');
+            }
+        } catch (error) {
+            toast.error('Failed to share');
+            console.error('Share error:', error);
         }
     };
 
@@ -579,7 +613,10 @@ const Product = () => {
                                     }`}
                                 />
                             </button>
-                            <button className="p-4 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors">
+                            <button 
+                                onClick={handleShare}
+                                className="p-4 rounded-md bg-gray-100 hover:bg-gray-200 transition-colors"
+                            >
                                 <FiShare2 className="text-xl" />
                             </button>
                         </div>
