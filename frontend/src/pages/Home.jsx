@@ -29,13 +29,14 @@ const Home = () => {
         <div className='flex flex-col items-center w-full'>
             <div className="w-full max-w-[1200px] px-4 sm:px-6 md:px-8">
                 <div
-                    className="w-full h-[230px] sm:h-[400px] md:h-[500px] lg:h-[600px] 
-                    mt-10 sm:mt-20 lg:mt-12 mb-8 lg:mb-14 rounded-lg bg-cover bg-center bg-no-repeat relative"
+                    className="w-full h-[200px] sm:h-[400px] md:h-[500px] lg:h-[600px] 
+                    mt-14 sm:mt-20 lg:mt-12 mb-8 lg:mb-14 rounded-lg bg-cover bg-center bg-no-repeat relative overflow-hidden"
                     style={{
-                        backgroundImage: `url('https://res.cloudinary.com/dh0xbfq7w/image/upload/f_auto,q_auto/v1/website%20assets/dbko7tw2n5ilobzpbxgu')`
+                        backgroundImage: `url('https://res.cloudinary.com/dh0xbfq7w/image/upload/f_auto,q_auto/v1/website%20assets/dbko7tw2n5ilobzpbxgu')`,
+                        objectFit: 'cover'
                     }}
                 >
-                    <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 md:bottom-16 md:left-16 lg:bottom-20 lg:left-24">
+                    <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 md:bottom-16 md:left-16 lg:bottom-20 lg:left-24 scale-75 sm:scale-100">
                         <Shop />
                     </div>
                     <span className="absolute bottom-2 right-4 text-[10px] sm:text-xs text-gray-900 opacity-70">
@@ -52,7 +53,7 @@ const Home = () => {
                             <button 
                                 key={item} 
                                 onClick={() => handleCategoryNavigation(item)}
-                                className='px-4 border-x border-gray-500 h-10 font-semibold whitespace-nowrap transition-colors duration-300 hover:bg-tertiary/80'
+                                className='px-4 border-x border-gray-500 h-10 font-semibold whitespace-nowrap transition-colors duration-300 hover:bg-tertiary/80 bg-tertiary/50 sm:bg-transparent'
                             >
                                 {item}
                             </button>
@@ -62,19 +63,19 @@ const Home = () => {
             </div>
 
             {/* Best Sellers Section */}
-            <div className='w-full max-w-[1200px] px-4 sm:px-6 md:px-8 mb-16'>
-                <h2 className='heading text-5xl sm:text-3xl lg:text-5xl font-bold mb-10 mt-8 text-center'>
+            <div className='w-full max-w-[1200px] px-3 sm:px-6 md:px-8 mb-12 sm:mb-16'>
+                <h2 className='heading text-2xl sm:text-3xl lg:text-5xl font-bold mb-6 sm:mb-10 mt-6 sm:mt-8 text-center'>
                 — Our Best Sellers —
                 </h2>
-                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'>
-                    {bestSellers.map((product) => (
+                <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6'>
+                    {bestSellers.slice(0, 6).map((product) => (
                         <ProductCard key={product._id} product={product} />
                     ))}
                 </div>
             </div>
 
-            <div className='mb-8'>
-            <Shop />
+            <div className='mb-6 sm:mb-8 scale-90 sm:scale-100'>
+                <Shop />
             </div>
         </div>        
     )
