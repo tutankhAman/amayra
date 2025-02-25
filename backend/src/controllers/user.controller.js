@@ -122,10 +122,10 @@ const loginUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"None"
+        sameSite: "None"
     }
 
-    //send cookie
+    //send cookie and tokens in response body for mobile clients
     return res
     .status(200)
     .cookie("accessToken", accessToken, options)
@@ -134,7 +134,9 @@ const loginUser = asyncHandler(async (req, res) => {
         new apiResponse(
             200, 
             {
-                user: loggedInUser, accessToken, refreshToken
+                user: loggedInUser, 
+                accessToken, // Include tokens in response body
+                refreshToken
             },
             "User logged in successfully"
         )
@@ -142,8 +144,12 @@ const loginUser = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async(req, res) => {
+    // Tokens can come from multiple sources
+    const userId = req.user._id;
+    
+    // Clear refresh token in database
     await User.findByIdAndUpdate(
-        req.user._id,
+        userId,
         {
             $set: {
                 refreshToken: undefined
@@ -154,10 +160,11 @@ const logoutUser = asyncHandler(async(req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite:"None",
+        sameSite: "None",
         path: '/'  // Add path to ensure cookies are cleared properly
     };
     
+    // Clear cookies and return success response
     return res
     .status(200)
     .clearCookie("accessToken", options)

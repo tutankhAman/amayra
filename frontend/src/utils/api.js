@@ -7,12 +7,17 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  withCredentials: true
+  withCredentials: true // Keep this to allow cookies when supported
 });
 
-// Check for auth token in cookies
-const hasAuthCookie = () => {
-  return document.cookie.includes('accessToken=');
+// Check for auth via multiple methods
+const hasAuth = () => {
+  // Check cookies first
+  const hasCookie = document.cookie.includes('accessToken=');
+  // Check localStorage as backup
+  const hasLocalToken = !!localStorage.getItem('accessToken');
+  
+  return hasCookie || hasLocalToken;
 };
 
 // Add auth check for protected routes
@@ -26,7 +31,13 @@ api.interceptors.request.use(
     const publicPaths = ['/users/login', '/users/register'];
     if (publicPaths.some(path => config.url?.includes(path))) return config;
     
-    if (hasAuthCookie()) config.headers['has-auth'] = 'true';
+    // Use localStorage token as backup when cookies aren't available
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    if (hasAuth()) config.headers['has-auth'] = 'true';
     return config;
   },
   (error) => Promise.reject(error)
@@ -59,13 +70,99 @@ api.interceptors.response.use(
   }
 );
 
+// Token refresh mechanism
+const refreshTokenIfNeeded = async () => {
+  try {
+    const response = await axios.post(
+      `${API_URL}/users/refresh-token`,
+      { refreshToken: localStorage.getItem('refreshToken') },
+      { withCredentials: true }
+    );
+    
+    if (response.data?.data?.accessToken) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      if (response.data.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.data.refreshToken);
+      }
+      return response.data.data.accessToken;
+    }
+  } catch (error) {
+    console.error("Failed to refresh token:", error);
+    // Clear tokens and redirect to login if refresh fails
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/login';
+  }
+  return null;
+};
+
 // Base HTTP methods
 const apiMethods = {
-  get: (url, params) => api.get(url, { params }),
-  post: (url, data) => api.post(url, data),
-  put: (url, data) => api.put(url, data),
-  patch: (url, data) => api.patch(url, data),
-  del: (url) => api.delete(url)
+  get: async (url, params) => {
+    try {
+      return await api.get(url, { params });
+    } catch (error) {
+      if (error.response?.status === 401) {
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+          return api.get(url, { params });
+        }
+      }
+      throw error;
+    }
+  },
+  post: async (url, data) => {
+    try {
+      return await api.post(url, data);
+    } catch (error) {
+      if (error.response?.status === 401 && !url.includes('/users/login') && !url.includes('/users/refresh-token')) {
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+          return api.post(url, data);
+        }
+      }
+      throw error;
+    }
+  },
+  put: async (url, data) => {
+    try {
+      return await api.put(url, data);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+          return api.put(url, data);
+        }
+      }
+      throw error;
+    }
+  },
+  patch: async (url, data) => {
+    try {
+      return await api.patch(url, data);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+          return api.patch(url, data);
+        }
+      }
+      throw error;
+    }
+  },
+  del: async (url) => {
+    try {
+      return await api.delete(url);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        const newToken = await refreshTokenIfNeeded();
+        if (newToken) {
+          return api.delete(url);
+        }
+      }
+      throw error;
+    }
+  }
 };
 
 export const productService = {
@@ -108,10 +205,38 @@ export const analyticsService = {
 };
 
 export const userService = {
-  register: (userData) => apiMethods.post('/users/register', userData),
-  login: (data) => apiMethods.post('/users/login', data),
-  logout: () => apiMethods.post('/users/logout'),
-  refreshToken: () => apiMethods.post('/users/refresh-token'),
+  register: async (userData) => {
+    const response = await apiMethods.post('/users/register', userData);
+    if (response.data?.data?.accessToken) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.data.refreshToken);
+    }
+    return response;
+  },
+  login: async (data) => {
+    const response = await apiMethods.post('/users/login', data);
+    if (response.data?.data?.accessToken) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.data.refreshToken);
+    }
+    return response;
+  },
+  logout: async () => {
+    const response = await apiMethods.post('/users/logout');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    return response;
+  },
+  refreshToken: async () => {
+    const response = await apiMethods.post('/users/refresh-token');
+    if (response.data?.data?.accessToken) {
+      localStorage.setItem('accessToken', response.data.data.accessToken);
+      if (response.data.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.data.refreshToken);
+      }
+    }
+    return response;
+  },
   getCurrentUser: () => apiMethods.get('/users/current-user'),
   changePassword: (data) => apiMethods.patch('/users/change-password', data),
   updateAccount: (data) => apiMethods.patch('/users/update-account', data),
