@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiPhone, FiLock, FiArrowRight, FiEye, FiEyeOff } from 'react-icons/fi';
 import { useUser } from '../context/UserContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 
 const Login = () => {
@@ -10,7 +10,18 @@ const Login = () => {
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
-  const { login, authLoading } = useUser();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { login, authLoading, user } = useUser();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    // Only redirect if user is logged in and we're not coming from a protected route
+    if (user && !location.state?.from) {
+      navigate('/');
+    }
+  }, [user, navigate, location]);
 
   const validatePhone = (phone) => {
     const phoneRegex = /^[6-9]\d{9}$/;  // Indian phone number format
@@ -26,6 +37,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (isSubmitting) return;
 
     // Validation check
     if (!validatePhone(formData.phone)) {
@@ -34,11 +47,21 @@ const Login = () => {
     }
 
     try {
+      setIsSubmitting(true);
       await login(formData);
+      
+      // After successful login, redirect to the originally attempted URL or home
+      const destination = location.state?.from?.pathname || '/';
+      navigate(destination, { replace: true });
     } catch (error) {
       // Error is handled by context
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  // Prevent form submission while loading
+  const isLoading = authLoading || isSubmitting;
 
   return (
     <div className="relative flex justify-center items-center w-full min-h-screen py-8 bg-gradient-to-br from-gray-50 to-gray-100">
@@ -133,18 +156,20 @@ const Login = () => {
                     Remember me
                   </label>
                 </div>
-                <a href="#" className="subheading text-sm text-primary hover:text-primary/80 font-medium transition-colors">
+                {/* <a href="#" className="subheading text-sm text-primary hover:text-primary/80 font-medium transition-colors">
                   Forgot password?
-                </a>
+                </a> */}
               </div>
 
               <button
                 type="submit"
-                disabled={authLoading}
-                className="group w-full bg-primary text-white py-3.5 rounded-xl hover:bg-primary/90 transition-all duration-200 font-medium text-lg flex items-center justify-center gap-2"
+                disabled={isLoading}
+                className={`group w-full bg-primary text-white py-3.5 rounded-xl transition-all duration-200 font-medium text-lg flex items-center justify-center gap-2 ${
+                  isLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary/90'
+                }`}
               >
-                {authLoading ? 'Signing in...' : 'Sign in'}
-                <FiArrowRight className="group-hover:translate-x-1 transition-transform" />
+                {isLoading ? 'Please wait...' : 'Sign in'}
+                {!isLoading && <FiArrowRight className="group-hover:translate-x-1 transition-transform" />}
               </button>
             </form>
 
