@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaSearch, FaShoppingCart, FaBars, FaUserCircle } from 'react-icons/fa';
 import { useUser } from '../context/UserContext';
 import { useCart } from '../context/CartContext';
 import SignUp from '../components/buttons/SignUp';
 import logo from '../assets/icons/logo.svg';
+import useClickOutside from '../hooks/useClickOutside';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,12 @@ const Navbar = () => {
   const navigate = useNavigate();
   
   const cartItemsCount = cart?.items?.length || 0;
+
+  const mobileMenuRef = useRef(null);
+  const profileDropdownRef = useRef(null);
+
+  useClickOutside(mobileMenuRef, () => setIsMenuOpen(false));
+  useClickOutside(profileDropdownRef, () => setIsProfileOpen(false));
 
   const handleLogout = async () => {
     await logout();
@@ -172,7 +179,7 @@ const Navbar = () => {
             </Link>
 
             {/* Profile/Signup Button - Desktop only */}
-            <div className="hidden md:block relative">
+            <div className="hidden md:block relative" ref={profileDropdownRef}>
               {renderProfileButton()}
               {isProfileOpen && user && <ProfileDropdown />}
             </div>
@@ -189,7 +196,10 @@ const Navbar = () => {
       </div>
 
       {/* Mobile Menu */}
-      <div className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}>
+      <div 
+        ref={mobileMenuRef}
+        className={`md:hidden ${isMenuOpen ? 'block' : 'hidden'}`}
+      >
         {/* Search Bar - Mobile */}
         <div className="px-4 py-2">
           <button

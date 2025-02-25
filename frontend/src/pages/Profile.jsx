@@ -30,6 +30,7 @@ const Profile = () => {
   const notifyError = (message) => toast.error(message);
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     loadUserData();
   }, []);
 
