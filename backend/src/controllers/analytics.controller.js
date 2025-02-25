@@ -144,14 +144,14 @@ const getSalesAnalytics = asyncHandler(async (req, res) => {
     try {
         // First, verify we have orders
         const orderCount = await Order.countDocuments({});
-        console.log("Total orders in database:", orderCount);
+        // console.log("Total orders in database:", orderCount);
 
         const dateFilter = getDateFilter(req.query.startDate, req.query.endDate);
-        console.log("Using date filter:", dateFilter);
+        // console.log("Using date filter:", dateFilter);
 
         // Get a sample order to verify structure
         const sampleOrder = await Order.findOne({}).lean();
-        console.log("Sample order structure:", JSON.stringify(sampleOrder, null, 2));
+        // console.log("Sample order structure:", JSON.stringify(sampleOrder, null, 2));
 
         const [overview, dailySales, topProducts, orderStatus] = await Promise.all([
             getOverallSales(dateFilter),
@@ -176,7 +176,7 @@ const getSalesAnalytics = asyncHandler(async (req, res) => {
             ]
         };
 
-        console.log("Final analytics:", JSON.stringify(analytics, null, 2));
+        // console.log("Final analytics:", JSON.stringify(analytics, null, 2));
 
         return res.status(200).json(
             new apiResponse(200, analytics, "Analytics fetched successfully")
