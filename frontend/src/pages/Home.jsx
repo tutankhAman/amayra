@@ -8,6 +8,11 @@ const Home = () => {
     const navigate = useNavigate();
     const [bestSellers, setBestSellers] = useState([]);
 
+    // Add this useEffect to scroll to top on mount
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     useEffect(() => {
         const fetchBestSellers = async () => {
             try {
@@ -25,6 +30,10 @@ const Home = () => {
         navigate(`/shop?category=${category}`);
     };
 
+    const handleShopClick = () => {
+        navigate('/shop');
+    };
+
     return (
         <div className='flex flex-col items-center w-full'>
             <div className="w-full max-w-[1200px] px-4 sm:px-6 md:px-8">
@@ -37,7 +46,7 @@ const Home = () => {
                     }}
                 >
                     <div className="absolute bottom-6 left-6 sm:bottom-12 sm:left-12 md:bottom-16 md:left-16 lg:bottom-20 lg:left-24 scale-75 sm:scale-100">
-                        <Shop />
+                        <Shop onClick={handleShopClick} />
                     </div>
                     <span className="absolute bottom-2 right-4 text-[10px] sm:text-xs text-gray-900 opacity-70">
                         @www.candidshutters.com
@@ -75,7 +84,7 @@ const Home = () => {
             </div>
 
             <div className='mb-6 sm:mb-8 scale-90 sm:scale-100'>
-                <Shop />
+                <Shop onClick={handleShopClick} />
             </div>
         </div>        
     )
