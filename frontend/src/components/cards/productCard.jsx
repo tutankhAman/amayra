@@ -1,17 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaCartPlus } from "react-icons/fa";
+import { useOrderStatus } from '../../context/OrderStatusContext';
 
 const ProductCard = ({ product }) => {
     const navigate = useNavigate();
+    const { ordersEnabled } = useOrderStatus();
 
     const handleCardClick = () => {
-        console.log('Navigating to product:', product._id);
-        navigate(`/product/${product._id}`); 
-    };
-
-    const handleCartClick = (e) => {
-        e.stopPropagation(); 
+        if (ordersEnabled) {
+            console.log('Navigating to product:', product._id);
+            navigate(`/product/${product._id}`);
+        }
     };
 
     return (

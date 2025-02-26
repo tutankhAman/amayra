@@ -6,9 +6,11 @@ import { ResponsivePie } from '@nivo/pie';
 import { ResponsiveBar } from '@nivo/bar';
 import axios from 'axios';
 import { analyticsService } from '../utils/api';
+import { useOrderStatus } from '../context/OrderStatusContext';
 
 const Admin = () => {
   const navigate = useNavigate();
+  const { ordersEnabled, toggleOrderStatus } = useOrderStatus();
   const [dateRange, setDateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     endDate: new Date().toISOString().split('T')[0],
@@ -176,6 +178,16 @@ const Admin = () => {
             className="flex-1 min-w-[120px] px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg hover:shadow-green-500/25 text-sm md:text-base font-medium"
           >
             Products
+          </button>
+          <button 
+            onClick={toggleOrderStatus} 
+            className={`flex-1 min-w-[120px] px-4 md:px-6 py-2.5 md:py-3 bg-gradient-to-r ${
+              ordersEnabled 
+                ? 'from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' 
+                : 'from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700'
+            } text-white rounded-xl transition-all duration-300 shadow-lg hover:shadow-red-500/25 text-sm md:text-base font-medium`}
+          >
+            {ordersEnabled ? 'Disable Orders' : 'Enable Orders'}
           </button>
         </div>
 

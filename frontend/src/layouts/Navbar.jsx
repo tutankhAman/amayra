@@ -6,12 +6,14 @@ import { useCart } from '../context/CartContext';
 import SignUp from '../components/buttons/SignUp';
 import logo from '../assets/icons/logo.svg';
 import useClickOutside from '../hooks/useClickOutside';
+import { useOrderStatus } from '../context/OrderStatusContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { user, logout } = useUser();
   const { cart } = useCart();
+  const { ordersEnabled } = useOrderStatus();
   const navigate = useNavigate();
   
   const cartItemsCount = cart?.items?.length || 0;
@@ -117,7 +119,7 @@ const Navbar = () => {
           {/* Navigation Links - Desktop */}
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/shop" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
-              Shop
+              {ordersEnabled ? 'Shop' : 'Catalogue'}
             </Link>
             <button 
               onClick={() => handleTypeNavigation('Men')} 
@@ -157,7 +159,7 @@ const Navbar = () => {
 
             {/* Mobile Shop Link */}
             <Link to="/shop" className="md:hidden text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
-              Shop
+              {ordersEnabled ? 'Shop' : 'Catalogue'}
             </Link>
 
             {/* Mobile Search Icon */}
@@ -168,15 +170,17 @@ const Navbar = () => {
               <FaSearch className="h-6 w-6" />
             </button>
 
-            {/* Cart Icon */}
-            <Link to="/cart" className="text-gray-700 hover:text-black relative transition-colors duration-300">
-              <FaShoppingCart className="h-6 w-6" />
-              {cartItemsCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemsCount}
-                </span>
-              )}
-            </Link>
+            {/* Cart Icon - Only show if orders are enabled */}
+            {ordersEnabled && (
+              <Link to="/cart" className="text-gray-700 hover:text-black relative transition-colors duration-300">
+                <FaShoppingCart className="h-6 w-6" />
+                {cartItemsCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {cartItemsCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Profile/Signup Button - Desktop only */}
             <div className="hidden md:block relative" ref={profileDropdownRef}>

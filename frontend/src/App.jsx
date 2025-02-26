@@ -5,23 +5,26 @@ import Navbar from './layouts/Navbar';
 import Footer from './layouts/Footer';
 import AppRoutes from './routes';
 import { CartProvider } from './context/CartContext';
+import { OrderStatusProvider } from './context/OrderStatusContext';
 
 function App() {
   return (
-    <CartProvider>
-      <BrowserRouter>
-        <UserProvider>
-          <Toaster position="top-right" />
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-grow">
-              <AppRoutes />
-            </main>
-            <Footer />
-          </div>
-        </UserProvider>
-      </BrowserRouter>
-    </CartProvider>
+    <OrderStatusProvider>
+      <CartProvider>
+        <BrowserRouter>
+          <UserProvider>
+            <Toaster position="top-right" />
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-grow">
+                <AppRoutes />
+              </main>
+              <Footer />
+            </div>
+          </UserProvider>
+        </BrowserRouter>
+      </CartProvider>
+    </OrderStatusProvider>
   );
 }
 
