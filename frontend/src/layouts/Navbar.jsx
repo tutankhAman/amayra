@@ -139,9 +139,9 @@ const Navbar = () => {
             >
               Kids
             </button>
-            <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
+            {/* <Link to="/contact" className="text-gray-700 hover:text-primary font-semibold transition-colors duration-300">
               Contact
-            </Link>
+            </Link> */}
           </div>
 
           {/* Right side actions */}
