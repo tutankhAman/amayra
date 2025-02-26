@@ -48,7 +48,7 @@ const AdminOrders = () => {
         const matchesSearch = 
             order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (order.user?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (order.user?.email || '').toLowerCase().includes(searchTerm.toLowerCase());
+            (order.user?.phone || '').toLowerCase().includes(searchTerm.toLowerCase());
         
         const matchesStatus = statusFilter === 'all' || order.orderStatus === statusFilter;
         
@@ -138,7 +138,7 @@ const AdminOrders = () => {
                                                     {order.user?.name || 'Unknown User'}
                                                 </div>
                                                 <div className="text-sm text-gray-500">
-                                                    {order.user?.email || 'No email'}
+                                                    {order.user?.phone || 'No phone'}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
@@ -194,7 +194,7 @@ const AdminOrders = () => {
                                             {order.user?.name || 'Unknown User'}
                                         </div>
                                         <div className="text-xs text-gray-400">
-                                            {order.user?.email || 'No email'}
+                                            {order.user?.phone || 'No phone'}
                                         </div>
                                     </div>
                                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${

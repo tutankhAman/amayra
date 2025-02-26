@@ -56,7 +56,7 @@ export const sendOrderNotification = async ({ orderId, customerName, totalAmount
 
     const mailOptions = {
         from: process.env.EMAIL_USER,
-        to: 'amanaziz2020@gmail.com',
+        to: 'mraza2m@gmail.com',
         subject: `New Order #${orderId} Received`,
         html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
