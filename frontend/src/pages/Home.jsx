@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Shop from '../components/buttons/Shop'
 import ProductCard from '../components/cards/productCard'
-import { analyticsService } from '../utils/api'
+import { analyticsService, productService } from '../utils/api'
 
 const Home = () => {
     const navigate = useNavigate();
     const [bestSellers, setBestSellers] = useState([]);
+    const [eidCollection, setEidCollection] = useState([]);
 
     // Add this useEffect to scroll to top on mount
     useEffect(() => {
@@ -14,16 +15,21 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-        const fetchBestSellers = async () => {
+        const fetchProducts = async () => {
             try {
-                const response = await analyticsService.getTopProducts();
-                setBestSellers(response.data.data);
+                // Fetch best sellers
+                const bestSellersResponse = await analyticsService.getTopProducts();
+                setBestSellers(bestSellersResponse.data.data);
+
+                // Fetch Eid Collection products
+                const eidResponse = await productService.getAll({ tags: 'Eid Collection' });
+                setEidCollection(eidResponse.data.data);
             } catch (error) {
-                console.error('Failed to fetch best sellers:', error);
+                console.error('Failed to fetch products:', error);
             }
         };
 
-        fetchBestSellers();
+        fetchProducts();
     }, []);
 
     const handleCategoryNavigation = (category) => {
@@ -69,6 +75,28 @@ const Home = () => {
                         ))}
                     </div>
                 </div>
+            </div>
+
+            {/* Eid Collection Section */}
+            <div className='w-full max-w-[1200px] px-3 sm:px-6 md:px-8 mb-12 sm:mb-16'>
+                <h2 className='heading text-2xl sm:text-3xl lg:text-5xl font-bold mb-6 sm:mb-10 mt-6 sm:mt-8 text-center'>
+                — Eid Collection —
+                </h2>
+                <div className='grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6'>
+                    {eidCollection.slice(0, 6).map((product) => (
+                        <ProductCard key={product._id} product={product} />
+                    ))}
+                </div>
+                {eidCollection.length > 6 && (
+                    <div className='flex justify-center mt-8'>
+                        <button
+                            onClick={() => navigate('/shop?tags=Eid Collection')}
+                            className='px-6 py-2 bg-tertiary/50 hover:bg-tertiary/80 transition-colors duration-300 rounded-lg font-medium'
+                        >
+                            View All Eid Collection
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Best Sellers Section */}

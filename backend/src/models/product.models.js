@@ -60,6 +60,11 @@ const productSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
+        tags: {
+            type: [String],
+            default: [],
+            enum: ["Trending", "Best Seller", "New Arrival", "Top Rated", "Sale", "Eid Collection"],
+        },
         reviews: [
             {
               user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

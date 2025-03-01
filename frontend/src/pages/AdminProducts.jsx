@@ -18,13 +18,13 @@ const AdminProducts = () => {
   const [formData, setFormData] = useState({
     name: '', productId: '', description: '', price: '',
     discount: '', type: '', category: '', sizes: [], stock: '',
-    images: []
+    images: [], tags: []
   });
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
   const [createFormData, setCreateFormData] = useState({
     name: '', productId: '', description: '', price: '',
     discount: 0, type: 'Men', category: '', sizes: [],
-    stock: 0, images: []
+    stock: 0, images: [], tags: []
   });
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,7 +59,8 @@ const AdminProducts = () => {
       category: product.category,
       sizes: product.sizes,
       stock: product.stock,
-      images: []
+      images: [],
+      tags: product.tags || []
     });
     setOpenDialog(true);
   };
@@ -76,6 +77,8 @@ const AdminProducts = () => {
           return;
         } else if (key === 'sizes') {
           form.append('sizes', formData.sizes.join(','));
+        } else if (key === 'tags') {
+          form.append('tags', formData.tags.join(','));
         } else {
           form.append(key, formData[key]);
         }
@@ -146,6 +149,11 @@ const AdminProducts = () => {
       if (createFormData.sizes.length > 0) {
         form.append('sizes', createFormData.sizes.join(','));
       }
+      
+      // Add tags as a comma-separated string
+      if (createFormData.tags.length > 0) {
+        form.append('tags', createFormData.tags.join(','));
+      }
 
       // Add images
       if (createFormData.images.length > 0) {
@@ -166,7 +174,7 @@ const AdminProducts = () => {
         setCreateFormData({
           name: '', productId: '', description: '', price: '',
           discount: 0, type: 'Men', category: '', sizes: [],
-          stock: 0, images: []
+          stock: 0, images: [], tags: []
         });
         showAlert('Product created successfully', 'success');
         fetchProducts();
@@ -529,6 +537,41 @@ const AdminProducts = () => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Tags selection - full width */}
+                    <div className="col-span-full">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Tags
+                      </label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {['Trending', 'Best Seller', 'New Arrival', 'Top Rated', 'Sale', 'Eid Collection'].map((tag) => (
+                          <div 
+                            key={tag} 
+                            className={`px-3 py-1.5 rounded-full text-sm cursor-pointer border
+                              ${formData.tags.includes(tag) 
+                                ? 'bg-indigo-100 border-indigo-500 text-indigo-700' 
+                                : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            onClick={() => {
+                              if (formData.tags.includes(tag)) {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  tags: prev.tags.filter(t => t !== tag)
+                                }));
+                              } else {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  tags: [...prev.tags, tag]
+                                }));
+                              }
+                            }}
+                          >
+                            {tag}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500">Click to select/deselect tags</p>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -805,6 +848,41 @@ const AdminProducts = () => {
                           )}
                         </div>
                       </div>
+                    </div>
+
+                    {/* Tags selection */}
+                    <div className="col-span-1 sm:col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Product Tags
+                      </label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {['Trending', 'Best Seller', 'New Arrival', 'Top Rated', 'Sale', 'Eid Collection'].map((tag) => (
+                          <div 
+                            key={tag} 
+                            className={`px-3 py-1.5 rounded-full text-sm cursor-pointer border
+                              ${createFormData.tags.includes(tag) 
+                                ? 'bg-indigo-100 border-indigo-500 text-indigo-700' 
+                                : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200'
+                              }`}
+                            onClick={() => {
+                              if (createFormData.tags.includes(tag)) {
+                                setCreateFormData(prev => ({
+                                  ...prev,
+                                  tags: prev.tags.filter(t => t !== tag)
+                                }));
+                              } else {
+                                setCreateFormData(prev => ({
+                                  ...prev,
+                                  tags: [...prev.tags, tag]
+                                }));
+                              }
+                            }}
+                          >
+                            {tag}
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-500">Click to select/deselect tags</p>
                     </div>
                   </div>
 
