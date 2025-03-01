@@ -31,7 +31,7 @@ const ProductCard = ({ product }) => {
             {/* Image Container */}
             <div className="relative aspect-[3/4] overflow-hidden rounded-t-xl">
                 <img
-                    src={product.images}
+                    src={Array.isArray(product.images) ? product.images[0] : product.images}
                     alt={product.name}
                     className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
                 />
